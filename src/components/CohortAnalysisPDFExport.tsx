@@ -194,6 +194,262 @@ export default function CohortAnalysisPDFExport() {
           </div>
         </div>
 
+        {/* Complete Comparison Trend Graph */}
+        {cohortFilters.selectedYears.length > 0 && cohortDataByYear.length > 0 && (
+          <div className="pdf-section p-8 bg-white">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-slate-800 mb-2">
+                Cohort Performance Trends - {cohortFilters.selectedYears[cohortFilters.selectedYears.length - 1]}
+              </h2>
+              <p className="text-sm text-slate-600">Multi-Metric Performance Comparison Across Engagement Levels</p>
+            </div>
+
+            {(() => {
+              const latestYearData = cohortDataByYear[cohortDataByYear.length - 1];
+              const sortedData = [...latestYearData].sort((a, b) => {
+                const order = { 2: 0, 3: 1, 1: 2 };
+                return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+              });
+
+              const COHORT_COLORS = ['#f97316', '#fbbf24', '#8b5cf6']; // Orange, Yellow, Violet
+              const metricNames = ['Accounts', 'Win Rate', 'Avg Deal Size', 'Sales Cycle', 'Revenue'];
+              
+              const cohortLines = sortedData.map((cohort, index) => ({
+                cohort: cohort.cohort,
+                label: COHORT_ENGAGEMENT_LABELS[cohort.cohort as 1 | 2 | 3],
+                color: COHORT_COLORS[index],
+                values: [
+                  cohort.accounts,
+                  cohort.winRate,
+                  cohort.avgDealSize / 1000,
+                  cohort.salesCycle,
+                  cohort.forecastedMarketingRevenueAttribution / 1000
+                ],
+                displayValues: [
+                  `${cohort.accounts}`,
+                  `${cohort.winRate.toFixed(1)}%`,
+                  `$${(cohort.avgDealSize / 1000).toFixed(1)}K`,
+                  `${cohort.salesCycle.toFixed(0)} days`,
+                  `$${(cohort.forecastedMarketingRevenueAttribution / 1000).toFixed(0)}K`
+                ]
+              }));
+
+              const width = 1100;
+              const height = 500;
+              const padding = { top: 60, right: 60, bottom: 80, left: 80 };
+              const chartWidth = width - padding.left - padding.right;
+              const chartHeight = height - padding.top - padding.bottom;
+
+              const allValues = cohortLines.flatMap(line => line.values);
+              const maxValue = Math.max(...allValues);
+              const minValue = Math.min(...allValues);
+              const valueRange = maxValue - minValue;
+              const xScale = chartWidth / (metricNames.length - 1);
+
+              return (
+                <div className="bg-white rounded-lg shadow-lg p-8">
+                  <svg width={width} height={height} className="mx-auto">
+                    {/* Grid lines */}
+                    {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+                      <g key={i}>
+                        <line
+                          x1={padding.left}
+                          y1={padding.top + chartHeight * ratio}
+                          x2={padding.left + chartWidth}
+                          y2={padding.top + chartHeight * ratio}
+                          stroke="#e5e7eb"
+                          strokeWidth="1"
+                        />
+                      </g>
+                    ))}
+
+                    {/* Vertical grid lines */}
+                    {metricNames.map((_, index) => (
+                      <line
+                        key={index}
+                        x1={padding.left + index * xScale}
+                        y1={padding.top}
+                        x2={padding.left + index * xScale}
+                        y2={padding.top + chartHeight}
+                        stroke="#f3f4f6"
+                        strokeWidth="1"
+                      />
+                    ))}
+
+                    {/* Trend lines */}
+                    {cohortLines.map((line, lineIndex) => {
+                      const points = line.values.map((value, metricIndex) => {
+                        const normalizedValue = (value - minValue) / valueRange;
+                        return {
+                          x: padding.left + metricIndex * xScale,
+                          y: padding.top + chartHeight - (normalizedValue * chartHeight),
+                          value: value,
+                          displayValue: line.displayValues[metricIndex]
+                        };
+                      });
+
+                      const pathData = points.map((p, i) => 
+                        `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`
+                      ).join(' ');
+
+                      return (
+                        <g key={lineIndex}>
+                          <path
+                            d={pathData}
+                            fill="none"
+                            stroke={line.color}
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          
+                          {points.map((point, i) => (
+                            <g key={i}>
+                              <circle
+                                cx={point.x}
+                                cy={point.y}
+                                r="6"
+                                fill="#ffffff"
+                                stroke={line.color}
+                                strokeWidth="3"
+                              />
+                              <circle
+                                cx={point.x}
+                                cy={point.y}
+                                r="3"
+                                fill={line.color}
+                              />
+                            </g>
+                          ))}
+                        </g>
+                      );
+                    })}
+
+                    {/* X-axis labels */}
+                    {metricNames.map((metric, index) => (
+                      <text
+                        key={index}
+                        x={padding.left + index * xScale}
+                        y={padding.top + chartHeight + 35}
+                        textAnchor="middle"
+                        fontSize="13"
+                        fontWeight="600"
+                        fill="#475569"
+                      >
+                        {metric}
+                      </text>
+                    ))}
+
+                    {/* Axes */}
+                    <line
+                      x1={padding.left}
+                      y1={padding.top}
+                      x2={padding.left}
+                      y2={padding.top + chartHeight}
+                      stroke="#94a3b8"
+                      strokeWidth="2"
+                    />
+                    <line
+                      x1={padding.left}
+                      y1={padding.top + chartHeight}
+                      x2={padding.left + chartWidth}
+                      y2={padding.top + chartHeight}
+                      stroke="#94a3b8"
+                      strokeWidth="2"
+                    />
+
+                    {/* Y-axis label */}
+                    <text
+                      x={20}
+                      y={height / 2}
+                      textAnchor="middle"
+                      fontSize="14"
+                      fontWeight="600"
+                      fill="#475569"
+                      transform={`rotate(-90, 20, ${height / 2})`}
+                    >
+                      Performance Index
+                    </text>
+
+                    {/* X-axis label */}
+                    <text
+                      x={width / 2}
+                      y={height - 20}
+                      textAnchor="middle"
+                      fontSize="14"
+                      fontWeight="600"
+                      fill="#475569"
+                    >
+                      Key Metrics
+                    </text>
+                  </svg>
+
+                  {/* Legend */}
+                  <div className="flex flex-wrap justify-center gap-6 mt-6">
+                    {cohortLines.map((line, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <div className="flex items-center">
+                          <div 
+                            className="w-6 h-1 rounded"
+                            style={{ backgroundColor: line.color }}
+                          ></div>
+                          <div 
+                            className="w-3 h-3 rounded-full border-2 -ml-1.5"
+                            style={{ 
+                              backgroundColor: '#ffffff',
+                              borderColor: line.color
+                            }}
+                          ></div>
+                        </div>
+                        <span className="text-sm font-semibold text-slate-700">
+                          {line.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Key Insights Cards */}
+                  <div className="grid grid-cols-3 gap-4 mt-8">
+                    {sortedData.map((cohort, index) => (
+                      <div 
+                        key={index}
+                        className="bg-white rounded-lg border-2 p-4"
+                        style={{ borderColor: COHORT_COLORS[index] }}
+                      >
+                        <h4 className="font-bold text-base text-slate-800 mb-3">
+                          {COHORT_ENGAGEMENT_LABELS[cohort.cohort as 1 | 2 | 3]}
+                        </h4>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-slate-600">Accounts:</span>
+                            <span className="font-semibold text-slate-800">{cohort.accounts}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-600">Win Rate:</span>
+                            <span className="font-semibold text-blue-600">{cohort.winRate.toFixed(1)}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-600">Avg Deal Size:</span>
+                            <span className="font-semibold text-purple-600">${(cohort.avgDealSize / 1000).toFixed(1)}K</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-600">Sales Cycle:</span>
+                            <span className="font-semibold text-amber-600">{cohort.salesCycle.toFixed(0)} days</span>
+                          </div>
+                          <div className="flex justify-between border-t pt-1 mt-1">
+                            <span className="text-slate-600">Revenue:</span>
+                            <span className="font-semibold text-cyan-600">${(cohort.forecastedMarketingRevenueAttribution / 1000).toFixed(0)}K</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
         {/* Delta Graph */}
         {deltaMetrics && deltaMetrics.length > 0 && (
           <div className="pdf-section p-8 bg-white">

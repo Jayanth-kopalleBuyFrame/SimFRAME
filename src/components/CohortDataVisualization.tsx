@@ -34,7 +34,7 @@ interface CohortDataVisualizationProps {
 
 type GraphType = 'accounts-pie' | 'revenue-pie' | 'accounts-bar' | 'revenue-bar' | 'winrate-bar' | 'dealsize-bar' | 'salescycle-bar' | 'cohort-comparison';
 
-const COHORT_COLORS = ['#003D6B', '#0052a3', '#0066cc'];
+const COHORT_COLORS = ['#f97316', '#fbbf24', '#8b5cf6']; // Orange, Yellow, Violet
 
 export default function CohortDataVisualization({
   isOpen,

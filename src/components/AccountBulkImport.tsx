@@ -188,7 +188,7 @@ export default function AccountBulkImport() {
           accountName: string;
           simulationName: string;
           actions: Action[] | null;
-          opportunities: Array<{opportunityStatus: string; revenueType: string; daysBetweenCreatedAndGoLive: number}>;
+          opportunities: Array<{opportunityStatus: string; revenueType: string; daysBetweenCreatedAndGoLive: number; numberOfOpportunities: number}>;
           totalOpportunities?: number;
         }>();
 

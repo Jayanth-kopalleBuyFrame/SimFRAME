@@ -6,7 +6,7 @@ import {
   generateCohortMetricsFromAccounts,
   calculateYearOverYearDeltas
 } from '../utils/cohortCalculations';
-import { TrendingUp, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 import DeltaGraph from './DeltaGraph';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';

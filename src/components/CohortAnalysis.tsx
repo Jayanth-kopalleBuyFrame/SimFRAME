@@ -6,35 +6,17 @@ import {
   generateCohortMetricsFromAccounts,
   calculateYearOverYearDeltas
 } from '../utils/cohortCalculations';
-import { TrendingUp, AlertCircle, Award, Eye, EyeOff } from 'lucide-react';
+import { TrendingUp, AlertCircle, Award, Eye, EyeOff, BarChart3 } from 'lucide-react';
 import CohortAnalysisPDFExport from './CohortAnalysisPDFExport';
+import CohortDataVisualization from './CohortDataVisualization';
 
 // All cohorts now use the same dark navy blue color
-
-// This is Jayanth's change
-const COHORT_RANGES = {
-  1: '3000+',
-  2: '0-1000',
-  3: '1001-3000',
-};
-
-// This is Jayanth's change
-const COHORT_NAMES = {
-  1: 'Cohort 1',
-  2: 'Cohort 2',
-  3: 'Cohort 3',
-};
-
-const COHORT_ENGAGEMENT_LABELS = {
-  1: 'High Engagement',
-  2: 'Low Engagement',
-  3: 'Medium Engagement',
-};
 
 export default function CohortAnalysis() {
   const { cohortFilters, setCohortFilters, committedCohortData } = useSimulatorStore();
   const availableYears = ['FY 24-25', 'FY 25-26', 'FY 26-27', 'FY 27-28'];
   const [showCohortFlow, setShowCohortFlow] = useState(false);
+  const [showVisualization, setShowVisualization] = useState(false);
 
   const handleYearSelection = (year: string) => {
     const selected = cohortFilters.selectedYears.includes(year)
@@ -44,15 +26,16 @@ export default function CohortAnalysis() {
     setCohortFilters({ selectedYears: selected.sort() });
   };
 
+  // This is Jayanth's change
   // Generate cohort data for all selected years
   const cohortDataByYear = useMemo(() => {
     return cohortFilters.selectedYears.map((year) => {
       if (year === 'FY 25-26' && committedCohortData) {
         // Use committed data for FY 25-26
         return [
-          generateCohortMetricsFromAccounts(1, committedCohortData.cohort1Count, committedCohortData.cohort1Actions || [], year),
-          generateCohortMetricsFromAccounts(2, committedCohortData.cohort2Count, committedCohortData.cohort2Actions || [], year),
-          generateCohortMetricsFromAccounts(3, committedCohortData.cohort3Count, committedCohortData.cohort3Actions || [], year),
+          generateCohortMetricsFromAccounts(1, committedCohortData.cohort1Count, committedCohortData.cohort1Simulations || [], year),
+          generateCohortMetricsFromAccounts(2, committedCohortData.cohort2Count, committedCohortData.cohort2Simulations || [], year),
+          generateCohortMetricsFromAccounts(3, committedCohortData.cohort3Count, committedCohortData.cohort3Simulations || [], year),
         ];
       }
       // Use hardcoded data for other years
@@ -136,19 +119,19 @@ export default function CohortAnalysis() {
                   <div className="flex-start gap-2">
                     <div className="cohort-indicator"></div>
                     <span className="text-slate-700">
-                      <span className="font-semibold">{committedCohortData.cohort1Count}</span> accounts in Cohort 1 (High Engagement)
+                      <span className="font-semibold">{committedCohortData.cohort2Count}</span> accounts in Low Engagement
                     </span>
                   </div>
                   <div className="flex-start gap-2">
                     <div className="cohort-indicator"></div>
                     <span className="text-slate-700">
-                      <span className="font-semibold">{committedCohortData.cohort2Count}</span> accounts in Cohort 2 (Low Engagement)
+                      <span className="font-semibold">{committedCohortData.cohort3Count}</span> accounts in Medium Engagement
                     </span>
                   </div>
                   <div className="flex-start gap-2">
                     <div className="cohort-indicator"></div>
                     <span className="text-slate-700">
-                      <span className="font-semibold">{committedCohortData.cohort3Count}</span> accounts in Cohort 3 (Medium Engagement)
+                      <span className="font-semibold">{committedCohortData.cohort1Count}</span> accounts in High Engagement
                     </span>
                   </div>
                 </div>
@@ -221,14 +204,24 @@ export default function CohortAnalysis() {
           <div className="section-divider">
             <h3 className="text-sm font-medium text-slate-700 mb-3">Cohort Definitions (Account Score Ranges)</h3>
             <div className="grid-3-cols">
-              {([1, 2, 3] as const).map((cohort) => (
-                <div key={cohort} className="flex-start gap-3">
-                  <div className="cohort-indicator-lg"></div>
-                  <span className="text-sm text-slate-600">
-                    {COHORT_NAMES[cohort]} ({COHORT_ENGAGEMENT_LABELS[cohort]}): {COHORT_RANGES[cohort]} score
-                  </span>
-                </div>
-              ))}
+              <div className="flex-start gap-3">
+                <div className="cohort-indicator-lg"></div>
+                <span className="text-sm text-slate-600">
+                  Low Engagement: 0-1000 score
+                </span>
+              </div>
+              <div className="flex-start gap-3">
+                <div className="cohort-indicator-lg"></div>
+                <span className="text-sm text-slate-600">
+                  Medium Engagement: 1001-3000 score
+                </span>
+              </div>
+              <div className="flex-start gap-3">
+                <div className="cohort-indicator-lg"></div>
+                <span className="text-sm text-slate-600">
+                  High Engagement: 3000+ score
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -248,9 +241,9 @@ export default function CohortAnalysis() {
           </div>
         )}
 
-        {/* Cohort Flow Visualization - Toggle Button */}
+        {/* Cohort Flow Visualization & Data Visualization - Toggle Buttons */}
         {cohortFilters.selectedYears.length > 0 && (
-          <div className="section-spacing flex justify-end mb-4">
+          <div className="section-spacing flex justify-end gap-4 mb-4">
             <button
               onClick={() => setShowCohortFlow(!showCohortFlow)}
               className="flex-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-md"
@@ -266,6 +259,14 @@ export default function CohortAnalysis() {
                   Show Cohort Flow
                 </>
               )}
+            </button>
+
+            <button
+              onClick={() => setShowVisualization(true)}
+              className="flex-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md"
+            >
+              <BarChart3 className="w-5 h-5" />
+              Data Visualization
             </button>
           </div>
         )}
@@ -286,23 +287,24 @@ export default function CohortAnalysis() {
                       {cohortFilters.selectedYears[yearIndex]}
                     </div>
                     
-                    {yearData.map((cohort) => {
+                    {[...yearData].sort((a, b) => {
+                      // Sort by engagement level: Low (2) -> Medium (3) -> High (1)
+                      const order = { 2: 0, 3: 1, 1: 2 };
+                      return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                    }).map((cohort) => {
                       // Calculate change from first year
                       const firstYearCohort = cohortDataByYear[0]?.find(c => c.cohort === cohort.cohort);
                       const change = firstYearCohort && yearIndex > 0 ? cohort.accounts - firstYearCohort.accounts : null;
                       
                       return (
                         <div key={cohort.cohort} className="relative flex flex-col items-center gap-3">
-                          {/* Engagement Label Above Circle */}
-                          <div className="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
-                            {COHORT_ENGAGEMENT_LABELS[cohort.cohort as 1 | 2 | 3]}
-                          </div>
-                          
                           {/* Circle */}
                           <div className="cohort-circle">
                             <div className="cohort-circle-label">#Accounts</div>
                             <div className="cohort-circle-count">{cohort.accounts}</div>
-                            <div className="cohort-circle-subtitle">{COHORT_NAMES[cohort.cohort as 1 | 2 | 3]}</div>
+                            <div className="cohort-circle-subtitle">
+                              {cohort.cohort === 1 ? 'High Engagement' : cohort.cohort === 2 ? 'Low Engagement' : 'Medium Engagement'}
+                            </div>
                             
                             {/* Show change inside circle if not first year */}
                             {change !== null && yearIndex > 0 && (
@@ -377,11 +379,14 @@ export default function CohortAnalysis() {
                 <thead className="cohort-table-header">
                   <tr>
                     <th className="cohort-table-header-cell">Metric</th>
-                    {yearData.map((cohort) => (
+                    {[...yearData].sort((a, b) => {
+                      const order = { 2: 0, 3: 1, 1: 2 };
+                      return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                    }).map((cohort) => (
                       <th key={cohort.cohort} className="cohort-table-header-cell-center">
                         <div className="flex-center gap-2">
                           <div className="cohort-indicator"></div>
-                          <span>{COHORT_NAMES[cohort.cohort as 1 | 2 | 3]}</span>
+                          <span>{cohort.cohort === 1 ? 'High Engagement' : cohort.cohort === 2 ? 'Low Engagement' : 'Medium Engagement'}</span>
                         </div>
                       </th>
                     ))}
@@ -390,19 +395,28 @@ export default function CohortAnalysis() {
                 <tbody className="cohort-table-body">
                   <tr className="cohort-table-row">
                     <td className="cohort-table-cell-bold">Accounts</td>
-                    {yearData.map((cohort) => (
+                    {[...yearData].sort((a, b) => {
+                      const order = { 2: 0, 3: 1, 1: 2 };
+                      return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                    }).map((cohort) => (
                       <td key={cohort.cohort} className="cohort-table-cell-center">{cohort.accounts}</td>
                     ))}
                   </tr>
                   <tr className="cohort-table-row">
                     <td className="cohort-table-cell-bold">Win Rate</td>
-                    {yearData.map((cohort) => (
+                    {[...yearData].sort((a, b) => {
+                      const order = { 2: 0, 3: 1, 1: 2 };
+                      return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                    }).map((cohort) => (
                       <td key={cohort.cohort} className="cohort-table-cell-center">{cohort.winRate.toFixed(1)}%</td>
                     ))}
                   </tr>
                   <tr className="cohort-table-row">
                     <td className="cohort-table-cell-bold">Avg Deal Size</td>
-                    {yearData.map((cohort) => (
+                    {[...yearData].sort((a, b) => {
+                      const order = { 2: 0, 3: 1, 1: 2 };
+                      return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                    }).map((cohort) => (
                       <td key={cohort.cohort} className="cohort-table-cell-center">
                         ${cohort.avgDealSize.toLocaleString()}
                       </td>
@@ -410,13 +424,19 @@ export default function CohortAnalysis() {
                   </tr>
                   <tr className="cohort-table-row">
                     <td className="cohort-table-cell-bold">Avg Sales Pipeline (Days)</td>
-                    {yearData.map((cohort) => (
+                    {[...yearData].sort((a, b) => {
+                      const order = { 2: 0, 3: 1, 1: 2 };
+                      return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                    }).map((cohort) => (
                       <td key={cohort.cohort} className="cohort-table-cell-center">{cohort.salesCycle}</td>
                     ))}
                   </tr>
                   <tr className="cohort-table-row">
                     <td className="cohort-table-cell-bold">Forecasted Marketing Revenue</td>
-                    {yearData.map((cohort) => (
+                    {[...yearData].sort((a, b) => {
+                      const order = { 2: 0, 3: 1, 1: 2 };
+                      return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                    }).map((cohort) => (
                       <td key={cohort.cohort} className="cohort-table-cell-center">
                         ${cohort.forecastedMarketingRevenueAttribution.toLocaleString(undefined, {
                           maximumFractionDigits: 0,
@@ -427,7 +447,10 @@ export default function CohortAnalysis() {
                   {yearIndex > 0 && (
                     <tr className="cohort-table-row">
                       <td className="cohort-table-cell-bold">YoY Revenue Delta</td>
-                      {yearData.map((cohort) => (
+                      {[...yearData].sort((a, b) => {
+                        const order = { 2: 0, 3: 1, 1: 2 };
+                        return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                      }).map((cohort) => (
                         <td key={cohort.cohort} className="cohort-table-cell-center">
                           <span
                             className={`font-semibold ${
@@ -473,11 +496,14 @@ export default function CohortAnalysis() {
                 <thead className="delta-table-header">
                   <tr>
                     <th className="delta-table-header-cell text-left">Metric</th>
-                    {deltaMetrics.map((delta: any) => (
+                    {[...deltaMetrics].sort((a: any, b: any) => {
+                      const order = { 2: 0, 3: 1, 1: 2 };
+                      return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                    }).map((delta: any) => (
                       <th key={delta.cohort} className="delta-table-header-cell">
                         <div className="flex-center gap-2">
                           <div className="cohort-indicator"></div>
-                          <span>{COHORT_NAMES[delta.cohort as 1 | 2 | 3]}</span>
+                          <span>{delta.cohort === 1 ? 'High Engagement' : delta.cohort === 2 ? 'Low Engagement' : 'Medium Engagement'}</span>
                         </div>
                       </th>
                     ))}
@@ -486,7 +512,10 @@ export default function CohortAnalysis() {
                 <tbody className="delta-table-body">
                   <tr className="delta-table-row">
                     <td className="delta-table-metric-cell">Accounts Δ</td>
-                    {deltaMetrics.map((delta: any) => (
+                    {[...deltaMetrics].sort((a: any, b: any) => {
+                      const order = { 2: 0, 3: 1, 1: 2 };
+                      return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                    }).map((delta: any) => (
                       <td key={delta.cohort} className="delta-table-value-cell">
                         <div className="flex flex-col items-center">
                           <span className={`font-bold ${delta.accountsDelta >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -501,7 +530,10 @@ export default function CohortAnalysis() {
                   </tr>
                   <tr className="delta-table-row">
                     <td className="delta-table-metric-cell">Win Rate Δ</td>
-                    {deltaMetrics.map((delta: any) => (
+                    {[...deltaMetrics].sort((a: any, b: any) => {
+                      const order = { 2: 0, 3: 1, 1: 2 };
+                      return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                    }).map((delta: any) => (
                       <td key={delta.cohort} className="delta-table-value-cell">
                         <span className={`font-semibold ${delta.winRateDelta >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {delta.winRateDelta >= 0 ? '+' : ''}{delta.winRateDelta.toFixed(1)}%
@@ -511,7 +543,10 @@ export default function CohortAnalysis() {
                   </tr>
                   <tr className="delta-table-row">
                     <td className="delta-table-metric-cell">Avg Deal Size Δ</td>
-                    {deltaMetrics.map((delta: any) => (
+                    {[...deltaMetrics].sort((a: any, b: any) => {
+                      const order = { 2: 0, 3: 1, 1: 2 };
+                      return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                    }).map((delta: any) => (
                       <td key={delta.cohort} className="delta-table-value-cell">
                         <div className="flex flex-col items-center">
                           <span className={`font-bold ${delta.avgDealSizeDelta >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -526,7 +561,10 @@ export default function CohortAnalysis() {
                   </tr>
                   <tr className="delta-table-row">
                     <td className="delta-table-metric-cell">Sales Cycle Δ</td>
-                    {deltaMetrics.map((delta: any) => (
+                    {[...deltaMetrics].sort((a: any, b: any) => {
+                      const order = { 2: 0, 3: 1, 1: 2 };
+                      return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                    }).map((delta: any) => (
                       <td key={delta.cohort} className="delta-table-value-cell">
                         <span className={`font-semibold ${delta.salesCycleDelta <= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {delta.salesCycleDelta >= 0 ? '+' : ''}{delta.salesCycleDelta} days
@@ -536,7 +574,10 @@ export default function CohortAnalysis() {
                   </tr>
                   <tr className="delta-table-row">
                     <td className="delta-table-metric-cell">Revenue Δ</td>
-                    {deltaMetrics.map((delta: any) => (
+                    {[...deltaMetrics].sort((a: any, b: any) => {
+                      const order = { 2: 0, 3: 1, 1: 2 };
+                      return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
+                    }).map((delta: any) => (
                       <td key={delta.cohort} className="delta-table-value-cell">
                         <div className="flex flex-col items-center">
                           <span className={`font-bold text-lg ${delta.revenueDelta >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -572,6 +613,15 @@ export default function CohortAnalysis() {
             <p className="page-subtitle">Select years from the filters above to view cohort analysis</p>
           </div>
         )}
+
+        {/* Data Visualization Modal */}
+        <CohortDataVisualization
+          isOpen={showVisualization}
+          onClose={() => setShowVisualization(false)}
+          cohortDataByYear={cohortDataByYear}
+          deltaMetrics={deltaMetrics as any}
+          selectedYears={cohortFilters.selectedYears}
+        />
       </div>
     </div>
   );

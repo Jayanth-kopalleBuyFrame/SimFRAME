@@ -33,13 +33,14 @@ export default function CohortAnalysisPDFExport() {
   const { cohortFilters, committedCohortData } = useSimulatorStore();
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // This is Jayanth's change
   // Generate cohort data for all selected years
   const cohortDataByYear = cohortFilters.selectedYears.map((year) => {
     if (year === 'FY 25-26' && committedCohortData) {
       return [
-        generateCohortMetricsFromAccounts(1, committedCohortData.cohort1Count, committedCohortData.cohort1Actions || [], year),
-        generateCohortMetricsFromAccounts(2, committedCohortData.cohort2Count, committedCohortData.cohort2Actions || [], year),
-        generateCohortMetricsFromAccounts(3, committedCohortData.cohort3Count, committedCohortData.cohort3Actions || [], year),
+        generateCohortMetricsFromAccounts(1, committedCohortData.cohort1Count, committedCohortData.cohort1Simulations || [], year),
+        generateCohortMetricsFromAccounts(2, committedCohortData.cohort2Count, committedCohortData.cohort2Simulations || [], year),
+        generateCohortMetricsFromAccounts(3, committedCohortData.cohort3Count, committedCohortData.cohort3Simulations || [], year),
       ];
     }
     return generateHardcodedCohortData(year);

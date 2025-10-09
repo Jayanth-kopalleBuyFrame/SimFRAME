@@ -23,13 +23,6 @@ interface DeltaGraphProps {
 // Single color for all cohorts - dark navy blue
 const COHORT_COLOR = '#003D6B';
 
-// This is Jayanth's change
-const COHORT_NAMES = {
-  1: 'Cohort 1 (High Engagement)',
-  2: 'Cohort 2 (Low Engagement)',
-  3: 'Cohort 3 (Medium Engagement)',
-};
-
 export default function DeltaGraph({ deltaMetrics, fromYear, toYear }: DeltaGraphProps) {
   if (!deltaMetrics || deltaMetrics.length === 0) {
     return (
@@ -74,7 +67,9 @@ export default function DeltaGraph({ deltaMetrics, fromYear, toYear }: DeltaGrap
             >
               <div className="flex-start gap-2 mb-2">
                 <div className="cohort-indicator rounded-full" />
-                <span className="font-semibold text-slate-700">{COHORT_NAMES[delta.cohort as 1 | 2 | 3]}</span>
+                <span className="font-semibold text-slate-700">
+                  {delta.cohort === 1 ? 'High Engagement' : delta.cohort === 2 ? 'Low Engagement' : 'Medium Engagement'}
+                </span>
               </div>
               
               <div className="space-y-2">
@@ -118,7 +113,7 @@ export default function DeltaGraph({ deltaMetrics, fromYear, toYear }: DeltaGrap
             return (
               <div key={delta.cohort} className="flex-center gap-4">
                 <div className="w-32 text-sm font-medium text-slate-700">
-                  {COHORT_NAMES[delta.cohort as 1 | 2 | 3]}
+                  {delta.cohort === 1 ? 'High Engagement' : delta.cohort === 2 ? 'Low Engagement' : 'Medium Engagement'}
                 </div>
                 
                 <div className="flex-1 relative">
@@ -164,7 +159,9 @@ export default function DeltaGraph({ deltaMetrics, fromYear, toYear }: DeltaGrap
           </h4>
           {deltaMetrics.map((delta) => (
             <div key={delta.cohort} className="flex-between py-2 border-b border-slate-100 last:border-0">
-              <span className="text-sm text-slate-600">{COHORT_NAMES[delta.cohort as 1 | 2 | 3]}</span>
+              <span className="text-sm text-slate-600">
+                {delta.cohort === 1 ? 'High Engagement' : delta.cohort === 2 ? 'Low Engagement' : 'Medium Engagement'}
+              </span>
               <span
                 className={`font-semibold ${
                   delta.accountsDelta >= 0 ? 'text-green-600' : 'text-red-600'
@@ -185,7 +182,9 @@ export default function DeltaGraph({ deltaMetrics, fromYear, toYear }: DeltaGrap
           </h4>
           {deltaMetrics.map((delta) => (
             <div key={delta.cohort} className="flex-between py-2 border-b border-slate-100 last:border-0">
-              <span className="text-sm text-slate-600">{COHORT_NAMES[delta.cohort as 1 | 2 | 3]}</span>
+              <span className="text-sm text-slate-600">
+                {delta.cohort === 1 ? 'High Engagement' : delta.cohort === 2 ? 'Low Engagement' : 'Medium Engagement'}
+              </span>
               <span
                 className={`font-semibold ${
                   delta.winRateDelta >= 0 ? 'text-green-600' : 'text-red-600'
@@ -206,7 +205,9 @@ export default function DeltaGraph({ deltaMetrics, fromYear, toYear }: DeltaGrap
           </h4>
           {deltaMetrics.map((delta) => (
             <div key={delta.cohort} className="flex-between py-2 border-b border-slate-100 last:border-0">
-              <span className="text-sm text-slate-600">{COHORT_NAMES[delta.cohort as 1 | 2 | 3]}</span>
+              <span className="text-sm text-slate-600">
+                {delta.cohort === 1 ? 'High Engagement' : delta.cohort === 2 ? 'Low Engagement' : 'Medium Engagement'}
+              </span>
               <span
                 className={`font-semibold ${
                   delta.salesCycleDelta <= 0 ? 'text-green-600' : 'text-red-600'

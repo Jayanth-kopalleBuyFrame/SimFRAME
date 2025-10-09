@@ -19,14 +19,15 @@ export default function Dashboard() {
     const fromYear = cohortFilters.selectedYears[0] || 'FY 24-25';
     const toYear = 'FY 25-26'; // Committed data is always FY 25-26
 
+    // This is Jayanth's change
     // Get hardcoded data for the "from" year
     const previousYearData = generateHardcodedCohortData(fromYear);
     
     // Get current year data from committed accounts
     const currentYearData = [
-      generateCohortMetricsFromAccounts(1, committedCohortData.cohort1Count, committedCohortData.cohort1Actions || [], toYear),
-      generateCohortMetricsFromAccounts(2, committedCohortData.cohort2Count, committedCohortData.cohort2Actions || [], toYear),
-      generateCohortMetricsFromAccounts(3, committedCohortData.cohort3Count, committedCohortData.cohort3Actions || [], toYear),
+      generateCohortMetricsFromAccounts(1, committedCohortData.cohort1Count, committedCohortData.cohort1Simulations || [], toYear),
+      generateCohortMetricsFromAccounts(2, committedCohortData.cohort2Count, committedCohortData.cohort2Simulations || [], toYear),
+      generateCohortMetricsFromAccounts(3, committedCohortData.cohort3Count, committedCohortData.cohort3Simulations || [], toYear),
     ];
 
     // Calculate deltas for each cohort

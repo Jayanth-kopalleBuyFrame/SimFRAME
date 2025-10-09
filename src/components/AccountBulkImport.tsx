@@ -3,7 +3,13 @@ import { useRef } from 'react';
 import { Download, Upload } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useSimulatorStore, type Action, type AccountSimulation } from '../store/simulatorStore';
-import { calculateAccountScore, findMajorContributor, calculateActionWeights } from '../utils/cohortCalculations';
+import { 
+  calculateAccountScore, 
+  findMajorContributor, 
+  calculateActionWeights,
+  calculateMultipleAccountsTotalOpportunities,
+  calculateTotalSimulations
+} from '../utils/cohortCalculations';
 
 interface ExcelRow {
   'Account Name': string;
@@ -36,44 +42,65 @@ export default function AccountBulkImport() {
   const handleDownloadTemplate = () => {
     const templateActions = getTemplateActions();
     
-    // Build header row
+    // This is Jayanth's change
+    // Build header row - account-specific fields moved outside action columns
     const headers = ['Account Name', 'Simulation Name'];
     templateActions.forEach(action => {
       headers.push(`${action.name} - Events`);
       headers.push(`${action.name} - Proposed Score`);
-      headers.push(`${action.name} - Opportunity Status`);
-      headers.push(`${action.name} - Revenue Type`);
-      headers.push(`${action.name} - Days Between Created and Go Live`);
-      headers.push(`${action.name} - Number of Opportunities`);
     });
+    // This is Jayanth's change  
+    // Add account-specific columns at the end (each row = one opportunity)
+    headers.push('Opportunity Status');
+    headers.push('Revenue Type');
+    headers.push('Days Between Created and Go Live');
+    headers.push('Total Opportunities');
+    headers.push('Number of Opportunities');
 
-    // Create sample rows
+    // This is Jayanth's change
+    // Create sample rows - each row represents ONE opportunity for an account
     const sampleData = [
       {
         'Account Name': 'Example Account 1',
         'Simulation Name': 'Q1 Strategy',
         ...templateActions.reduce((acc, action) => {
-          acc[`${action.name} - Events`] = 0;
-          acc[`${action.name} - Proposed Score`] = 0;
-          acc[`${action.name} - Opportunity Status`] = 'Open';
-          acc[`${action.name} - Revenue Type`] = 'New Business';
-          acc[`${action.name} - Days Between Created and Go Live`] = 0;
-          acc[`${action.name} - Number of Opportunities`] = 0;
+          acc[`${action.name} - Events`] = 10;
+          acc[`${action.name} - Proposed Score`] = 5;
           return acc;
         }, {} as Record<string, number | string>),
+        'Opportunity Status': 'Closed Live',
+        'Revenue Type': 'New',
+        'Days Between Created and Go Live': 82,
+        'Total Opportunities': 3,
+        'Number of Opportunities': 2,
       },
       {
-        'Account Name': 'Example Account 2',
-        'Simulation Name': 'Q2 Strategy',
+        'Account Name': 'Example Account 1',
+        'Simulation Name': 'Q1 Strategy',
         ...templateActions.reduce((acc, action) => {
-          acc[`${action.name} - Events`] = 0;
-          acc[`${action.name} - Proposed Score`] = 0;
-          acc[`${action.name} - Opportunity Status`] = 'Open';
-          acc[`${action.name} - Revenue Type`] = 'New Business';
-          acc[`${action.name} - Days Between Created and Go Live`] = 0;
-          acc[`${action.name} - Number of Opportunities`] = 0;
+          acc[`${action.name} - Events`] = 10;
+          acc[`${action.name} - Proposed Score`] = 5;
           return acc;
         }, {} as Record<string, number | string>),
+        'Opportunity Status': 'Closed Lost',
+        'Revenue Type': 'New',
+        'Days Between Created and Go Live': 89,
+        'Total Opportunities': 3,
+        'Number of Opportunities': 1,
+      },
+      {
+        'Account Name': 'Example Account 1',
+        'Simulation Name': 'Q1 Strategy',
+        ...templateActions.reduce((acc, action) => {
+          acc[`${action.name} - Events`] = 10;
+          acc[`${action.name} - Proposed Score`] = 5;
+          return acc;
+        }, {} as Record<string, number | string>),
+        'Opportunity Status': 'Closed Live',
+        'Revenue Type': 'Existing',
+        'Days Between Created and Go Live': 84,
+        'Total Opportunities': 3,
+        'Number of Opportunities': 3,
       },
     ];
 
@@ -115,19 +142,16 @@ export default function AccountBulkImport() {
           return;
         }
 
+        // This is Jayanth's change
         // Dynamically detect actions from column headers
         const firstRow = jsonData[0];
         const columnNames = Object.keys(firstRow);
         
-        // Extract unique action names from column patterns like "Action Name - Field Type"
+        // Extract unique action names from column patterns like "Action Name - Events/Proposed Score"
         const actionNamesSet = new Set<string>();
         const fieldSuffixes = [
           ' - Events',
           ' - Proposed Score',
-          ' - Opportunity Status',
-          ' - Revenue Type',
-          ' - Days Between Created and Go Live',
-          ' - Number of Opportunities',
         ];
         
         columnNames.forEach(colName => {
@@ -147,8 +171,26 @@ export default function AccountBulkImport() {
           return;
         }
 
-        // Parse and group data by account
-        const accountsMap = new Map<string, { name: string; simulations: AccountSimulation[] }>();
+        // This is Jayanth's change
+        // Helper function to find column value with case-insensitive and flexible matching
+        const findColumnValue = (row: ExcelRow, possibleNames: string[]): any => {
+          for (const name of possibleNames) {
+            if (row[name] !== undefined && row[name] !== null && row[name] !== '') {
+              return row[name];
+            }
+          }
+          return undefined;
+        };
+        
+        // This is Jayanth's change
+        // Group rows by Account Name + Simulation Name (each row = one opportunity)
+        const simulationMap = new Map<string, {
+          accountName: string;
+          simulationName: string;
+          actions: Action[] | null;
+          opportunities: Array<{opportunityStatus: string; revenueType: string; daysBetweenCreatedAndGoLive: number}>;
+          totalOpportunities?: number;
+        }>();
 
         jsonData.forEach((row) => {
           const accountName = row['Account Name'];
@@ -159,72 +201,167 @@ export default function AccountBulkImport() {
             return;
           }
 
-          // Extract action data from row using dynamically detected action names
-          const actions: Action[] = detectedActionNames.map((actionName, index) => {
-            const eventsKey = `${actionName} - Events`;
-            const proposedScoreKey = `${actionName} - Proposed Score`;
-            const opportunityStatusKey = `${actionName} - Opportunity Status`;
-            const revenueTypeKey = `${actionName} - Revenue Type`;
-            const daysBetweenKey = `${actionName} - Days Between Created and Go Live`;
-            const numberOfOpportunitiesKey = `${actionName} - Number of Opportunities`;
-            
-            const events = Number(row[eventsKey]) || 0;
-            const proposedScore = Number(row[proposedScoreKey]) || 0;
-            const completeScore = events * proposedScore;
-            const opportunityStatus = row[opportunityStatusKey] ? String(row[opportunityStatusKey]) : undefined;
-            const revenueType = row[revenueTypeKey] ? String(row[revenueTypeKey]) : undefined;
-            const daysBetweenCreatedAndGoLive = row[daysBetweenKey] ? Number(row[daysBetweenKey]) : undefined;
-            const numberOfOpportunities = row[numberOfOpportunitiesKey] ? Number(row[numberOfOpportunitiesKey]) : undefined;
+          const key = `${accountName}|||${simulationName}`;
+          
+          // Read opportunity data from this row (each row is one opportunity)
+          const opportunityStatusValue = findColumnValue(row, [
+            'Opportunity Status',
+            'Opportunity status',
+            'opportunity status',
+            'OpportunityStatus'
+          ]);
+          
+          const revenueTypeValue = findColumnValue(row, [
+            'Revenue Type',
+            'Revenue type',
+            'revenue type',
+            'RevenueType'
+          ]);
+          
+          const daysValue = findColumnValue(row, [
+            'Days Between Created and Go Live',
+            'Days between created and go live',
+            'Days between created and go live date',
+            'Days Between Created and Go Live Date',
+            'days between created and go live date'
+          ]);
 
-            return {
-              id: `action-${index}-${Date.now()}-${Math.random()}`,
-              name: actionName,
-              weight: 0, // Will be calculated
-              events,
-              currentScore: Math.floor(Math.random() * 10) + 1,
-              proposedScore,
-              completeScore,
-              opportunityStatus,
-              revenueType,
-              daysBetweenCreatedAndGoLive,
-              numberOfOpportunities,
+          const numberOfOpportunitiesValue = findColumnValue(row, [
+            'Number of Opportunities',
+            'Number of opportunities',
+            'number of opportunities',
+            'NumberOfOpportunities',
+            '# of Opportunities',
+            'No. of Opportunities'
+          ]);
+
+          // This is Jayanth's change
+          // Add opportunity if we have at least opportunity status and days (revenue type can be optional)
+          const hasMinimumData = opportunityStatusValue && daysValue !== undefined && daysValue !== null && daysValue !== '';
+          
+          if (!hasMinimumData) {
+            console.warn(`Skipping row for ${accountName} - ${simulationName}: Missing required opportunity data`, {
+              opportunityStatus: opportunityStatusValue,
+              revenueType: revenueTypeValue,
+              days: daysValue
+            });
+          }
+          
+          if (hasMinimumData) {
+            const opportunity = {
+              opportunityStatus: String(opportunityStatusValue),
+              revenueType: revenueTypeValue ? String(revenueTypeValue) : 'Not Specified',
+              daysBetweenCreatedAndGoLive: Number(daysValue) || 0,
+              numberOfOpportunities: numberOfOpportunitiesValue ? Number(numberOfOpportunitiesValue) : 0,
             };
-          });
+
+            if (!simulationMap.has(key)) {
+              // First row for this account+simulation: extract actions and total opportunities
+              const actions: Action[] = detectedActionNames.map((actionName, index) => {
+                const eventsKey = `${actionName} - Events`;
+                const proposedScoreKey = `${actionName} - Proposed Score`;
+                
+                const events = Number(row[eventsKey]) || 0;
+                const proposedScore = Number(row[proposedScoreKey]) || 0;
+                const completeScore = events * proposedScore;
+
+                return {
+                  id: `action-${index}-${Date.now()}-${Math.random()}`,
+                  name: actionName,
+                  weight: 0, // Will be calculated
+                  events,
+                  currentScore: Math.floor(Math.random() * 10) + 1,
+                  proposedScore,
+                  completeScore,
+                };
+              });
+
+              // Read Total Opportunities from first row
+              const totalOpportunitiesValue = findColumnValue(row, [
+                'Total Opportunities',
+                'Total opportunities',
+                'total opportunities',
+                'TotalOpportunities'
+              ]);
+
+              simulationMap.set(key, {
+                accountName,
+                simulationName,
+                actions,
+                opportunities: [opportunity],
+                totalOpportunities: totalOpportunitiesValue ? Number(totalOpportunitiesValue) : undefined,
+              });
+              
+              console.log(`Created new simulation group for ${accountName} - ${simulationName} with 1 opportunity`);
+            } else {
+              // Subsequent row for same account+simulation: just add opportunity
+              simulationMap.get(key)!.opportunities.push(opportunity);
+              console.log(`Added opportunity to ${accountName} - ${simulationName}. Total opportunities: ${simulationMap.get(key)!.opportunities.length}`);
+            }
+          }
+        });
+
+        // Build accounts from grouped simulations
+        const accountsMap = new Map<string, { name: string; simulations: AccountSimulation[] }>();
+
+        simulationMap.forEach((simData) => {
+          if (!simData.actions) return;
 
           // Calculate weights
-          const proposedScores = actions.map(a => a.proposedScore);
+          const proposedScores = simData.actions.map(a => a.proposedScore);
           const weights = calculateActionWeights(proposedScores);
-          actions.forEach((action, idx) => {
+          simData.actions.forEach((action, idx) => {
             action.weight = weights[idx] || 0;
           });
 
           // Calculate account score and major contributor
-          const accountScore = calculateAccountScore(actions);
-          const majorContributor = findMajorContributor(actions);
+          const accountScore = calculateAccountScore(simData.actions);
+          const majorContributor = findMajorContributor(simData.actions);
 
+          // This is Jayanth's change
           const simulation: AccountSimulation = {
             simulationId: `sim-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            simulationName,
-            actions,
+            simulationName: simData.simulationName,
+            actions: simData.actions,
             accountScore,
             majorContributor: majorContributor || undefined,
+            opportunities: simData.opportunities,
+            totalOpportunities: simData.totalOpportunities,
           };
 
           // Add to accounts map
-          if (!accountsMap.has(accountName)) {
-            accountsMap.set(accountName, {
-              name: accountName,
+          if (!accountsMap.has(simData.accountName)) {
+            accountsMap.set(simData.accountName, {
+              name: simData.accountName,
               simulations: [],
             });
           }
-          accountsMap.get(accountName)!.simulations.push(simulation);
+          accountsMap.get(simData.accountName)!.simulations.push(simulation);
         });
 
+        // This is Jayanth's change
         // Convert map to array and bulk create
         const accountsArray = Array.from(accountsMap.values());
+        
+        // Log summary before creating
+        console.log('=== Import Summary ===');
+        accountsArray.forEach(account => {
+          console.log(`Account: ${account.name}`);
+          account.simulations.forEach(sim => {
+            console.log(`  - Simulation: ${sim.simulationName}`);
+            console.log(`    Actions: ${sim.actions.length}`);
+            console.log(`    Opportunities: ${sim.opportunities.length}`);
+            console.log(`    Total Opportunities Field: ${sim.totalOpportunities}`);
+          });
+        });
+        
         bulkCreateAccounts(accountsArray, fileName);
 
-        alert(`Successfully imported ${accountsArray.length} account(s) with ${jsonData.length} simulation(s) from "${fileName}"!`);
+        // This is Jayanth's change - Use utility functions for calculations
+        const totalOpportunities = calculateMultipleAccountsTotalOpportunities(accountsArray);
+        const totalSimulations = calculateTotalSimulations(accountsArray);
+        
+        alert(`Successfully imported ${accountsArray.length} account(s) with ${totalSimulations} simulation(s) and ${totalOpportunities} opportunities from "${fileName}"!`);
         
         // Clear the file input
         if (fileInputRef.current) {

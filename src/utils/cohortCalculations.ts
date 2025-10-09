@@ -301,27 +301,29 @@ export function classifyAccountIntoCohort(accountScore: number): 1 | 2 | 3 {
  * Calculate Win Rate for a cohort based on actual opportunity data
  * Formula: (Total Closed Live Opportunities) / (Total Closed Live + Total Closed Lost) * 100
  * 
- * @param actions - All actions from all accounts in the cohort
+ * @param simulations - All account simulations in the cohort
  * @returns Win rate as a percentage
  */
 export function calculateCohortWinRate(
-  actions: Array<{
-    opportunityStatus?: string;
-    numberOfOpportunities?: number;
+  simulations: Array<{
+    opportunities: Array<{
+      opportunityStatus: string;
+    }>;
   }>
 ): number {
   let closedLiveCount = 0;
   let closedLostCount = 0;
 
-  actions.forEach(action => {
-    const opps = action.numberOfOpportunities || 0;
-    const status = action.opportunityStatus?.toLowerCase() || '';
-    
-    if (status.includes('closed') && status.includes('live')) {
-      closedLiveCount += opps;
-    } else if (status.includes('closed') && status.includes('lost')) {
-      closedLostCount += opps;
-    }
+  simulations.forEach(sim => {
+    sim.opportunities.forEach(opp => {
+      const status = opp.opportunityStatus?.toLowerCase() || '';
+      
+      if (status.includes('closed') && status.includes('live')) {
+        closedLiveCount++;
+      } else if (status.includes('closed') && status.includes('lost')) {
+        closedLostCount++;
+      }
+    });
   });
 
   const total = closedLiveCount + closedLostCount;
@@ -357,24 +359,28 @@ export function calculateCohortAvgDealSize(cohort: 1 | 2 | 3, accountCount: numb
 // This is Jayanth's change
 /**
  * Calculate Average Sales Pipeline (Average Days Between Created and Go Live)
- * Formula: Sum of all daysBetweenCreatedAndGoLive / Number of actions with data
+ * Formula: Sum of all daysBetweenCreatedAndGoLive / Total number of opportunities
  * 
- * @param actions - All actions from all accounts in the cohort
+ * @param simulations - All account simulations in the cohort
  * @returns Average sales pipeline in days
  */
 export function calculateAverageSalesPipeline(
-  actions: Array<{
-    daysBetweenCreatedAndGoLive?: number;
+  simulations: Array<{
+    opportunities: Array<{
+      daysBetweenCreatedAndGoLive: number;
+    }>;
   }>
 ): number {
   let totalDays = 0;
   let count = 0;
 
-  actions.forEach(action => {
-    if (action.daysBetweenCreatedAndGoLive !== undefined && action.daysBetweenCreatedAndGoLive !== null) {
-      totalDays += action.daysBetweenCreatedAndGoLive;
-      count++;
-    }
+  simulations.forEach(sim => {
+    sim.opportunities.forEach(opp => {
+      if (opp.daysBetweenCreatedAndGoLive !== undefined && opp.daysBetweenCreatedAndGoLive !== null) {
+        totalDays += opp.daysBetweenCreatedAndGoLive;
+        count++;
+      }
+    });
   });
 
   if (count === 0) return 0;
@@ -409,28 +415,29 @@ export function calculateCohortMarketingRevenue(
 
 // This is Jayanth's change
 /**
- * Generate cohort metrics from committed accounts with actual action data
+ * Generate cohort metrics from committed account simulations
  * 
  * @param cohortNumber - The cohort number (1, 2, or 3)
  * @param accountCount - Number of accounts in the cohort
- * @param actions - All actions from all accounts in this cohort
+ * @param simulations - All account simulations in this cohort
  * @param year - Fiscal year
  * @returns Complete cohort metrics
  */
 export function generateCohortMetricsFromAccounts(
   cohortNumber: 1 | 2 | 3,
   accountCount: number,
-  actions: Array<{
-    opportunityStatus?: string;
-    revenueType?: string;
-    daysBetweenCreatedAndGoLive?: number;
-    numberOfOpportunities?: number;
+  simulations: Array<{
+    opportunities: Array<{
+      opportunityStatus: string;
+      revenueType: string;
+      daysBetweenCreatedAndGoLive: number;
+    }>;
   }>,
   year: string = 'FY 25-26'
 ): CohortMetrics {
-  // Calculate metrics from actual data
-  const winRate = calculateCohortWinRate(actions);
-  const salesCycle = calculateAverageSalesPipeline(actions);
+  // Calculate metrics from actual opportunity data
+  const winRate = calculateCohortWinRate(simulations);
+  const salesCycle = calculateAverageSalesPipeline(simulations);
   
   // Keep using calculated values for deal size (can be updated later with real data)
   const avgDealSize = calculateCohortAvgDealSize(cohortNumber, accountCount);
@@ -592,6 +599,112 @@ export function calculateYearOverYearDeltas(
       ),
     };
   });
+}
+
+// ============================================
+// ACCOUNT/SIMULATION UTILITY CALCULATIONS
+// ============================================
+
+// This is Jayanth's change
+/**
+ * Calculate total days between created and go live for a single simulation
+ * @param opportunities - Array of opportunities
+ * @returns Total days
+ */
+export function calculateSimulationTotalDays(
+  opportunities: Array<{ daysBetweenCreatedAndGoLive: number }>
+): number {
+  return opportunities.reduce((sum, opp) => sum + opp.daysBetweenCreatedAndGoLive, 0);
+}
+
+// This is Jayanth's change
+/**
+ * Calculate sum of numberOfOpportunities for a single simulation
+ * @param opportunities - Array of opportunities
+ * @returns Sum of numberOfOpportunities
+ */
+export function calculateSimulationTotalNumberOfOpportunities(
+  opportunities: Array<{ numberOfOpportunities: number }>
+): number {
+  return opportunities.reduce((sum, opp) => sum + opp.numberOfOpportunities, 0);
+}
+
+// This is Jayanth's change
+/**
+ * Calculate total days between created and go live for all simulations in an account
+ * @param simulations - Array of account simulations
+ * @returns Total days across all simulations
+ */
+export function calculateAccountTotalDays(
+  simulations: Array<{
+    opportunities: Array<{ daysBetweenCreatedAndGoLive: number }>;
+  }>
+): number {
+  return simulations.reduce((total, sim) => 
+    total + calculateSimulationTotalDays(sim.opportunities), 0
+  );
+}
+
+// This is Jayanth's change
+/**
+ * Calculate total number of opportunities across all simulations in an account
+ * @param simulations - Array of account simulations
+ * @returns Total opportunity count
+ */
+export function calculateAccountTotalOpportunities(
+  simulations: Array<{
+    opportunities: Array<any>;
+  }>
+): number {
+  return simulations.reduce((total, sim) => total + sim.opportunities.length, 0);
+}
+
+// This is Jayanth's change
+/**
+ * Calculate sum of numberOfOpportunities field across all simulations in an account
+ * @param simulations - Array of account simulations
+ * @returns Sum of numberOfOpportunities field
+ */
+export function calculateAccountTotalNumberOfOpportunitiesField(
+  simulations: Array<{
+    opportunities: Array<{ numberOfOpportunities: number }>;
+  }>
+): number {
+  return simulations.reduce((total, sim) => 
+    total + calculateSimulationTotalNumberOfOpportunities(sim.opportunities), 0
+  );
+}
+
+// This is Jayanth's change
+/**
+ * Calculate total number of opportunities across multiple accounts
+ * @param accounts - Array of accounts with simulations
+ * @returns Total opportunity count across all accounts
+ */
+export function calculateMultipleAccountsTotalOpportunities(
+  accounts: Array<{
+    simulations: Array<{
+      opportunities: Array<any>;
+    }>;
+  }>
+): number {
+  return accounts.reduce((sum, acc) => 
+    sum + calculateAccountTotalOpportunities(acc.simulations), 0
+  );
+}
+
+// This is Jayanth's change
+/**
+ * Calculate total number of simulations across multiple accounts
+ * @param accounts - Array of accounts with simulations
+ * @returns Total simulation count
+ */
+export function calculateTotalSimulations(
+  accounts: Array<{
+    simulations: Array<any>;
+  }>
+): number {
+  return accounts.reduce((sum, a) => sum + a.simulations.length, 0);
 }
 
 // ============================================

@@ -12,10 +12,6 @@ export interface Action {
   currentScore: number;
   proposedScore: number;
   completeScore: number;
-  opportunityStatus?: string;
-  revenueType?: string;
-  daysBetweenCreatedAndGoLive?: number;
-  numberOfOpportunities?: number;
 }
 
 export interface Simulation {
@@ -24,6 +20,14 @@ export interface Simulation {
   actions: Action[];
   createdAt: Date;
   lastModified: Date;
+}
+
+// This is Jayanth's change - Individual opportunity data
+export interface Opportunity {
+  opportunityStatus: string;
+  revenueType: string;
+  daysBetweenCreatedAndGoLive: number;
+  numberOfOpportunities: number;
 }
 
 export interface AccountSimulation {
@@ -35,6 +39,10 @@ export interface AccountSimulation {
     actionName: string;
     contribution: number;
   };
+  // This is Jayanth's change - Array of opportunities for this account
+  opportunities: Opportunity[];
+  // This is Jayanth's change - Total opportunities count (account-level field)
+  totalOpportunities?: number;
 }
 
 export interface Account {
@@ -64,15 +72,16 @@ export interface Upload {
   accountIds: string[];
 }
 
+// This is Jayanth's change
 export interface CommittedCohortData {
   year: string;
   cohort1Count: number;
   cohort2Count: number;
   cohort3Count: number;
   committedAt: Date;
-  cohort1Actions?: Action[];
-  cohort2Actions?: Action[];
-  cohort3Actions?: Action[];
+  cohort1Simulations?: AccountSimulation[];
+  cohort2Simulations?: AccountSimulation[];
+  cohort3Simulations?: AccountSimulation[];
 }
 
 // Combined simulation list item for dropdown
@@ -475,10 +484,10 @@ export const useSimulatorStore = create<SimulatorState>()(
       cohort3: 0,
     };
 
-    // Store actions by cohort for metric calculation
-    const cohort1Actions: any[] = [];
-    const cohort2Actions: any[] = [];
-    const cohort3Actions: any[] = [];
+    // Store simulations by cohort for metric calculation
+    const cohort1Simulations: AccountSimulation[] = [];
+    const cohort2Simulations: AccountSimulation[] = [];
+    const cohort3Simulations: AccountSimulation[] = [];
 
     // Get accounts from active upload only
     const activeUpload = state.activeUploadId ? state.uploads.get(state.activeUploadId) : null;
@@ -495,21 +504,21 @@ export const useSimulatorStore = create<SimulatorState>()(
         const score = sim.accountScore;
         
         // Classify into cohorts based on engagement levels
-        // Low Engagement: 0-1000
-        // Medium Engagement: 1001-3000
-        // High Engagement: 3000+
+        // Cohort 1 = High Engagement: 3000+
+        // Cohort 2 = Low Engagement: 0-1000
+        // Cohort 3 = Medium Engagement: 1001-3000
         if (score >= 0 && score <= 1000) {
-          cohortCounts.cohort1++;
-          cohort1Actions.push(...sim.actions);
-        } else if (score >= 1001 && score <= 3000) {
           cohortCounts.cohort2++;
-          cohort2Actions.push(...sim.actions);
-        } else if (score > 3000) {
+          cohort2Simulations.push(sim);
+        } else if (score >= 1001 && score <= 3000) {
           cohortCounts.cohort3++;
-          cohort3Actions.push(...sim.actions);
+          cohort3Simulations.push(sim);
+        } else if (score > 3000) {
+          cohortCounts.cohort1++;
+          cohort1Simulations.push(sim);
         } else {
-          cohortCounts.cohort1++; // Default invalid scores to cohort 1
-          cohort1Actions.push(...sim.actions);
+          cohortCounts.cohort2++; // Default invalid scores to cohort 2 (Low Engagement)
+          cohort2Simulations.push(sim);
         }
       });
     });
@@ -520,19 +529,35 @@ export const useSimulatorStore = create<SimulatorState>()(
       const recalculated = recalculateSimulation(simulation.actions);
       const score = recalculated.accountScore;
       
+      // This is Jayanth's change
+      // Create an AccountSimulation-like object for manual simulations
+      const manualSim: AccountSimulation = {
+        simulationId: simulation.id,
+        simulationName: simulation.name,
+        actions: simulation.actions,
+        accountScore: recalculated.accountScore,
+        majorContributor: recalculated.majorContributor || undefined,
+        // Manual simulations don't have opportunities
+        opportunities: [],
+        totalOpportunities: undefined,
+      };
+      
       // Classify into cohorts based on engagement levels
+      // Cohort 1 = High Engagement: 3000+
+      // Cohort 2 = Low Engagement: 0-1000
+      // Cohort 3 = Medium Engagement: 1001-3000
       if (score >= 0 && score <= 1000) {
-        cohortCounts.cohort1++;
-        cohort1Actions.push(...simulation.actions);
-      } else if (score >= 1001 && score <= 3000) {
         cohortCounts.cohort2++;
-        cohort2Actions.push(...simulation.actions);
-      } else if (score > 3000) {
+        cohort2Simulations.push(manualSim);
+      } else if (score >= 1001 && score <= 3000) {
         cohortCounts.cohort3++;
-        cohort3Actions.push(...simulation.actions);
+        cohort3Simulations.push(manualSim);
+      } else if (score > 3000) {
+        cohortCounts.cohort1++;
+        cohort1Simulations.push(manualSim);
       } else {
-        cohortCounts.cohort1++; // Default invalid scores to cohort 1
-        cohort1Actions.push(...simulation.actions);
+        cohortCounts.cohort2++; // Default invalid scores to cohort 2 (Low Engagement)
+        cohort2Simulations.push(manualSim);
       }
     });
 
@@ -542,10 +567,10 @@ export const useSimulatorStore = create<SimulatorState>()(
       cohort2Count: cohortCounts.cohort2,
       cohort3Count: cohortCounts.cohort3,
       committedAt: new Date(),
-      cohort1Actions,
-      cohort2Actions,
-      cohort3Actions,
-    } as any;
+      cohort1Simulations,
+      cohort2Simulations,
+      cohort3Simulations,
+    };
 
     set({ committedCohortData: committedData });
     

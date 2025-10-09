@@ -5,7 +5,11 @@ import { Plus, Trash2, Save, ChevronDown, TrendingUp } from 'lucide-react';
 import { 
   calculateCompleteScore,
   calculateCompleteCurrentScore,
-  generateRandomCurrentScore 
+  generateRandomCurrentScore,
+  calculateSimulationTotalDays,
+  calculateAccountTotalDays,
+  calculateSimulationTotalNumberOfOpportunities,
+  calculateAccountTotalNumberOfOpportunitiesField
 } from '../utils/cohortCalculations';
 import AccountBulkImport from './AccountBulkImport';
 
@@ -211,9 +215,9 @@ export default function SimulatorWorkbench() {
       const result = commitAccountsToCohorts();
       alert(
         `Successfully committed to cohorts!\n\n` +
-        `Cohort 1 (High Engagement, 3000+): ${result.cohort1Count} simulations\n` +
-        `Cohort 2 (Low Engagement, 0-1000): ${result.cohort2Count} simulations\n` +
-        `Cohort 3 (Medium Engagement, 1001-3000): ${result.cohort3Count} simulations\n\n` +
+        `Low Engagement (0-1000): ${result.cohort2Count} simulations\n` +
+        `Medium Engagement (1001-3000): ${result.cohort3Count} simulations\n` +
+        `High Engagement (3000+): ${result.cohort1Count} simulations\n\n` +
         `View results in the Cohort Analysis tab.`
       );
       
@@ -273,20 +277,25 @@ export default function SimulatorWorkbench() {
           </div>
         )}
 
-        {/* Account Score (if viewing account simulations) */}
-        {activeAccount && activeAccount.simulations.length > 0 && (
+        {/* Account Score (for both account simulations and manual simulations) */}
+        {((activeAccount && activeAccount.simulations.length > 0) || activeSimulation) && (
           <div className="card-padded section-spacing bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-primary-300">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <TrendingUp className="w-8 h-8 text-primary-600" />
-                <span className="text-2xl font-bold text-slate-800">{activeAccount.name}</span>
+                <span className="text-2xl font-bold text-slate-800">
+                  {activeAccount ? activeAccount.name : 'Manual Account'}
+                </span>
               </div>
               <div className="flex items-center justify-center">
                 <div className="relative flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 shadow-lg">
                   <div className="absolute inset-2 rounded-full bg-white flex flex-col items-center justify-center">
                     <div className="text-xs font-medium text-slate-500 mb-1">Score</div>
                     <div className="text-3xl font-bold text-primary-600">
-                      {displayedSimulation?.accountScore.toFixed(0) || '0'}
+                      {activeAccount 
+                        ? (displayedSimulation?.accountScore.toFixed(0) || '0')
+                        : (activeSimulation?.actions.reduce((sum, action) => sum + action.completeScore, 0).toFixed(0) || '0')
+                      }
                     </div>
                   </div>
                 </div>
@@ -412,6 +421,7 @@ export default function SimulatorWorkbench() {
               </button>
             </div>
 
+            {/* This is Jayanth's change */}
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-slate-50">
@@ -422,10 +432,6 @@ export default function SimulatorWorkbench() {
                     <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Complete Current Score</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Proposed Score</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Complete Proposed Score</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Opportunity Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Revenue Type</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Days Created to Go Live</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700"># of Opportunities</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-slate-700">Actions</th>
                   </tr>
                 </thead>
@@ -493,26 +499,6 @@ export default function SimulatorWorkbench() {
                             {action.completeScore.toFixed(0)}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="w-32 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-sm">
-                            {action.opportunityStatus || '-'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="w-32 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-sm">
-                            {action.revenueType || '-'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="w-24 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-sm text-center">
-                            {action.daysBetweenCreatedAndGoLive !== undefined ? action.daysBetweenCreatedAndGoLive : '-'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="w-24 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-sm text-center">
-                            {action.numberOfOpportunities !== undefined ? action.numberOfOpportunities : '-'}
-                          </div>
-                        </td>
                         <td className="px-6 py-4 text-center">
                           {!isReadOnly && (
                             <button
@@ -549,6 +535,91 @@ export default function SimulatorWorkbench() {
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* This is Jayanth's change - Account Details Section */}
+        {activeAccount && (
+          <div className="card shadow-md overflow-hidden section-spacing">
+            <div className="tab-header">
+              <h2 className="text-2xl font-bold text-white">
+                Account Details - {activeAccount.name}
+              </h2>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Column Headers */}
+              <div className="grid grid-cols-4 gap-4 pb-4 border-b-2 border-slate-300">
+                <div className="font-semibold text-slate-700">Opportunity Status</div>
+                <div className="font-semibold text-slate-700">Revenue Type</div>
+                <div className="font-semibold text-slate-700">Days Between Created and Go Live</div>
+                <div className="font-semibold text-slate-700">Number of Opportunities</div>
+              </div>
+
+              {/* Simulations */}
+              {activeAccount.simulations.map((sim, simIndex) => (
+                <div key={sim.simulationId} className="space-y-4">
+                  <div className="flex items-center gap-2 text-primary-600 font-semibold text-lg">
+                    <span>{sim.simulationName} details under this account</span>
+                  </div>
+
+                  {/* Opportunities for this simulation */}
+                  {sim.opportunities && sim.opportunities.length > 0 ? (
+                    <div className="space-y-2 ml-4">
+                      {sim.opportunities.map((opp, oppIndex) => (
+                        <div key={oppIndex} className="grid grid-cols-4 gap-4 py-3 hover:bg-slate-50 rounded-lg transition-colors">
+                          <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-700">
+                            {opp.opportunityStatus}
+                          </div>
+                          <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-700">
+                            {opp.revenueType}
+                          </div>
+                          <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-center">
+                            {opp.daysBetweenCreatedAndGoLive} days
+                          </div>
+                          <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-center">
+                            {opp.numberOfOpportunities}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* This is Jayanth's change - Simulation Total */}
+                      <div className="grid grid-cols-4 gap-4 py-3 border-t-2 border-slate-300 mt-2">
+                        <div className="col-span-2 px-3 py-2 font-bold text-slate-800">
+                          Total for {sim.simulationName}
+                        </div>
+                        <div className="px-3 py-2 border border-slate-300 rounded-lg font-bold text-slate-800 text-center">
+                          {calculateSimulationTotalDays(sim.opportunities)} days
+                        </div>
+                        <div className="px-3 py-2 border border-slate-300 rounded-lg font-bold text-slate-800 text-center">
+                          {calculateSimulationTotalNumberOfOpportunities(sim.opportunities)}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="ml-4 text-sm text-slate-500 italic">No opportunities for this simulation</div>
+                  )}
+
+                  {/* Divider between simulations */}
+                  {simIndex < activeAccount.simulations.length - 1 && (
+                    <div className="border-t border-slate-200 mt-6"></div>
+                  )}
+                </div>
+              ))}
+
+              {/* This is Jayanth's change - Grand Total Row */}
+              <div className="grid grid-cols-4 gap-4 py-4 border-t-4 border-slate-400 mt-6">
+                <div className="col-span-2 px-3 py-2 font-bold text-slate-800 text-lg">
+                  Grand Total for {activeAccount.name}
+                </div>
+                <div className="px-3 py-2 border-2 border-slate-400 rounded-lg font-bold text-slate-800 text-center text-lg">
+                  {calculateAccountTotalDays(activeAccount.simulations)} days
+                </div>
+                <div className="px-3 py-2 border-2 border-slate-400 rounded-lg font-bold text-slate-800 text-center text-lg">
+                  {calculateAccountTotalNumberOfOpportunitiesField(activeAccount.simulations)}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

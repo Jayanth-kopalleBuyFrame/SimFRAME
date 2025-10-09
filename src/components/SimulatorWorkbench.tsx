@@ -20,6 +20,7 @@ export default function SimulatorWorkbench() {
     activeSimulationId,
     createSimulation,
     setActiveSimulation,
+    updateSimulation,
     updateAction,
     addAction,
     deleteAction,
@@ -284,14 +285,16 @@ export default function SimulatorWorkbench() {
               <div className="flex items-center gap-3">
                 <TrendingUp className="w-8 h-8 text-primary-600" />
                 <span className="text-2xl font-bold text-slate-800">
-                  {activeAccount ? activeAccount.name : 'Manual Account'}
+                  {activeAccount ? activeAccount.name : 'Account Score'}
                 </span>
               </div>
               <div className="flex items-center justify-center">
                 <div className="relative flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 shadow-lg">
                   <div className="absolute inset-2 rounded-full bg-white flex flex-col items-center justify-center">
-                    <div className="text-xs font-medium text-slate-500 mb-1">Score</div>
-                    <div className="text-3xl font-bold text-primary-600">
+                    {activeAccount && (
+                      <div className="text-xs font-medium text-slate-500 mb-1">Score</div>
+                    )}
+                    <div className={`${activeAccount ? 'text-3xl' : 'text-4xl'} font-bold text-primary-600`}>
                       {activeAccount 
                         ? (displayedSimulation?.accountScore.toFixed(0) || '0')
                         : (activeSimulation?.actions.reduce((sum, action) => sum + action.completeScore, 0).toFixed(0) || '0')
@@ -420,6 +423,75 @@ export default function SimulatorWorkbench() {
                 Commit to Cohorts
               </button>
             </div>
+
+            {/* This is Jayanth's change - Opportunity Data Inputs for Manual Simulations */}
+            {activeSimulation && !displayedSimulation && (
+              <div className="p-6 border-b border-slate-200 bg-slate-50">
+                <h3 className="text-lg font-semibold text-slate-800 mb-4">Opportunity Information</h3>
+                <div className="grid grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Opportunity Status
+                    </label>
+                    <select
+                      value={activeSimulation.opportunityStatus || ''}
+                      onChange={(e) => updateSimulation(activeSimulationId!, { opportunityStatus: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="">Select Status</option>
+                      <option value="Closed Live">Closed Live</option>
+                      <option value="Closed Lost">Closed Lost</option>
+                      <option value="Open Pipeline">Open Pipeline</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Revenue Type
+                    </label>
+                    <select
+                      value={activeSimulation.revenueType || ''}
+                      onChange={(e) => updateSimulation(activeSimulationId!, { revenueType: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="">Select Type</option>
+                      <option value="New">New</option>
+                      <option value="Existing">Existing</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Days Between Created and Go Live
+                    </label>
+                    <input
+                      type="number"
+                      value={activeSimulation.daysBetweenCreatedAndGoLive || ''}
+                      onChange={(e) => updateSimulation(activeSimulationId!, { daysBetweenCreatedAndGoLive: parseFloat(e.target.value) || 0 })}
+                      min="0"
+                      step="1"
+                      placeholder="Enter days"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Number of Opportunities
+                    </label>
+                    <input
+                      type="number"
+                      value={activeSimulation.numberOfOpportunities || ''}
+                      onChange={(e) => updateSimulation(activeSimulationId!, { numberOfOpportunities: parseFloat(e.target.value) || 0 })}
+                      min="0"
+                      step="1"
+                      placeholder="Enter count"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* This is Jayanth's change */}
             <div className="overflow-x-auto">

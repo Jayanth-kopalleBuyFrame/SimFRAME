@@ -20,6 +20,11 @@ export interface Simulation {
   actions: Action[];
   createdAt: Date;
   lastModified: Date;
+  // This is Jayanth's change - Manual simulation opportunity data
+  opportunityStatus?: string;
+  revenueType?: string;
+  daysBetweenCreatedAndGoLive?: number;
+  numberOfOpportunities?: number;
 }
 
 // This is Jayanth's change - Individual opportunity data

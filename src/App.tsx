@@ -3,7 +3,7 @@ import { useSimulatorStore } from './store/simulatorStore';
 import Dashboard from './components/Dashboard';
 import SimulatorWorkbench from './components/SimulatorWorkbench';
 import CohortAnalysis from './components/CohortAnalysis';
-import { BarChart3, Sliders, Home } from 'lucide-react';
+import { Sliders, Home, TrendingUp } from 'lucide-react';
 
 function App() {
   const { activeTab, setActiveTab } = useSimulatorStore();
@@ -11,7 +11,7 @@ function App() {
   const tabs = [
     { id: 'dashboard' as const, label: 'Dashboard', icon: Home },
     { id: 'simulator' as const, label: 'Simulating Workbench', icon: Sliders },
-    { id: 'cohort-analysis' as const, label: 'Cohort Analysis', icon: BarChart3 },
+    { id: 'cohort-analysis' as const, label: 'Cohort Analysis', icon: TrendingUp },
   ];
 
   return (
@@ -21,7 +21,7 @@ function App() {
         <div className="nav-bar-content">
           <div className="nav-bar-inner">
             <div className="nav-bar-brand">
-              <BarChart3 className="nav-bar-brand-icon" />
+              <img src="/logo.png" alt="Logo" className="nav-bar-brand-icon" />
               <span className="nav-bar-brand-text">SimFRAME</span>
             </div>
 

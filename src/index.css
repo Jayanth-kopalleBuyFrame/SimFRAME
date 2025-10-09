@@ -177,17 +177,19 @@
   }
 
   .nav-bar-brand {
-    @apply flex items-center gap-3;
+    @apply flex items-center gap-0;
   }
 
   .nav-bar-brand-icon {
-    @apply w-8 h-8;
+    @apply h-8;
+    width: auto;
+    max-height: 2rem;
     color: #003D6B;
   }
 
   .nav-bar-brand-text {
-    @apply text-2xl font-bold;
-    color: #003D6B;
+    @apply text-2xl font-bold text-black;
+    margin-left: -1rem;
   }
 
   .nav-bar-tabs {

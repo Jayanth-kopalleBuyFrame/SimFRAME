@@ -329,16 +329,29 @@ export default function SimulatorWorkbench() {
                           ))}
                         </optgroup>
                       )}
-                      {/* Account Simulations Section */}
-                      {combinedSimulations.filter(s => s.type === 'account').length > 0 && (
-                        <optgroup label="Account Simulations">
-                          {combinedSimulations.filter(s => s.type === 'account').map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.displayName}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
+                      {/* Account Simulations Grouped by Account */}
+                      {(() => {
+                        // Group account simulations by account name
+                        const accountSimulations = combinedSimulations.filter(s => s.type === 'account');
+                        const groupedByAccount = accountSimulations.reduce((acc, item) => {
+                          const accountName = item.accountName || 'Unknown Account';
+                          if (!acc[accountName]) {
+                            acc[accountName] = [];
+                          }
+                          acc[accountName].push(item);
+                          return acc;
+                        }, {} as Record<string, typeof accountSimulations>);
+
+                        return Object.entries(groupedByAccount).map(([accountName, sims]) => (
+                          <optgroup key={accountName} label={accountName}>
+                            {sims.map((item) => (
+                              <option key={item.id} value={item.id}>
+                                {item.displayName}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ));
+                      })()}
                     </>
                   )}
                 </select>

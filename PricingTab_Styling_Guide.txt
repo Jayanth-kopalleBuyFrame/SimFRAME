@@ -1,0 +1,746 @@
+# PricingTab Styling Guide
+## Comprehensive Tailwind CSS Styling Patterns
+
+This document contains all the styling patterns extracted from PricingTab.tsx.
+These styles use Tailwind CSS utility classes and can be imported to another product.
+
+---
+
+## TABLE OF CONTENTS
+1. Layout & Container Styles
+2. Header Styles
+3. Button Styles
+4. Input Field Styles
+5. Table Styles
+6. Modal/Dialog Styles
+7. Badge & Status Styles
+8. Alert/Warning Styles
+9. Form Element Styles
+10. Color Palette Reference
+11. Utility Classes
+
+---
+
+## 1. LAYOUT & CONTAINER STYLES
+
+### Main Container
+```
+className="p-6"
+```
+
+### Card Containers
+```
+// Primary header card
+className="bg-primary p-4 rounded-t-lg mb-4"
+
+// White content cards
+className="p-6 bg-white rounded-lg border border-gray-200 mb-6"
+
+// Control panel card
+className="bg-white p-4 rounded-lg border border-gray-200 mb-4"
+
+// Table container
+className="bg-white rounded-lg border border-gray-200 mb-6"
+```
+
+### Flex Layouts
+```
+// Header flex container
+className="flex justify-between items-center"
+
+// Button group container
+className="flex items-center space-x-4"
+
+// Button row
+className="flex space-x-2"
+
+// Modal footer buttons
+className="flex justify-end space-x-3"
+```
+
+---
+
+## 2. HEADER STYLES
+
+### Page Title
+```
+className="text-2xl font-bold text-secondary"
+```
+
+### Section Headers
+```
+// Modal/Dialog headers
+className="text-lg font-semibold mb-4"
+
+// Delete modal header (red variant)
+className="text-lg font-semibold mb-4 text-red-600"
+```
+
+### Tab Buttons
+```
+// Active tab
+className="px-4 py-2 rounded bg-secondary text-primary"
+
+// Inactive tab
+className="px-4 py-2 rounded bg-transparent text-secondary border border-secondary"
+
+// Dynamic tab styling
+className={`px-4 py-2 rounded ${activeTab === 'pricing' ? 'bg-secondary text-primary' : 'bg-transparent text-secondary border border-secondary'}`}
+```
+
+---
+
+## 3. BUTTON STYLES
+
+### Primary Buttons
+```
+// Primary action button
+className="bg-primary text-secondary px-4 py-2 rounded hover:bg-primary-dark transition-colors"
+
+// Primary button in modal
+className="px-4 py-2 bg-primary text-secondary rounded hover:bg-primary-dark"
+```
+
+### Secondary/Cancel Buttons
+```
+className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+```
+
+### Destructive/Delete Buttons
+```
+// Delete button
+className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+
+// Delete button in modal
+className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+```
+
+---
+
+## 4. INPUT FIELD STYLES
+
+### Text Inputs (Basic)
+```
+className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+```
+
+### Number Inputs (Standard)
+```
+className="w-28 p-1 text-right border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+```
+
+### Number Inputs with Percentage Symbol
+```
+// Input container
+className="relative"
+
+// Input field
+className="w-28 p-1 pr-6 text-right border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+
+// Percentage symbol overlay
+className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm pointer-events-none"
+```
+
+### Disabled/Read-only Inputs
+```
+// Disabled input
+className="w-full min-w-[140px] border p-1 rounded focus:outline-none focus:ring-2 focus:ring-primary bg-gray-100 cursor-not-allowed"
+
+// Read-only field
+className="w-full p-1 text-right text-gray-600 bg-gray-50 border rounded"
+
+// Read-only with opacity
+className="w-full border p-1 pr-6 text-right rounded focus:outline-none focus:ring-2 focus:ring-primary bg-gray-100 cursor-not-allowed opacity-60"
+```
+
+### Highlighted/Error Inputs
+```
+// Standard editable cell
+className="px-2 py-1 border bg-primary-light"
+
+// Error/Warning highlight
+className="px-2 py-1 border bg-red-100 border-red-400"
+
+// Conditional highlighting
+className={`px-2 py-1 border ${shouldHighlight ? 'bg-red-100 border-red-400' : 'bg-gray-50'}`}
+```
+
+### Select Dropdowns
+```
+// Standard dropdown
+className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+
+// Minimum width dropdown
+className="w-full min-w-[160px] p-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+
+// Disabled dropdown
+className="w-full min-w-[160px] p-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary bg-gray-100 cursor-not-allowed"
+```
+
+### Checkboxes
+```
+// Standard checkbox
+className="w-4 h-4"
+
+// Checkbox with focus ring
+className="w-4 h-4 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+
+// Read-only checkbox
+className="w-4 h-4 rounded focus:outline-none focus:ring-2 focus:ring-primary opacity-50 cursor-not-allowed"
+```
+
+---
+
+## 5. TABLE STYLES
+
+### Table Structure
+```
+// Main table
+className="min-w-[1500px] bg-white relative"
+
+// Large table (tiered pricing)
+className="min-w-[4000px] bg-white relative"
+
+// Table container with scroll
+className="overflow-auto max-h-[70vh] main-table-container relative"
+```
+
+### Table Headers
+```
+// Sticky header
+className="sticky top-0 z-10"
+
+// Main header cell
+className="px-2 py-2 border bg-gray-100 sticky top-0"
+
+// Section header cells (first row)
+className="px-4 py-2 border text-left bg-primary text-secondary sticky top-0"
+className="px-4 py-2 border text-left bg-accent text-white sticky top-0"
+className="px-4 py-2 border text-left bg-primary-medium text-primary sticky top-0"
+className="px-4 py-2 border text-left bg-primary-light text-primary sticky top-0"
+className="px-4 py-2 border text-left bg-primary-dark text-secondary sticky top-0"
+
+// Sub-header row (column names)
+className="bg-gray-100 text-xs sticky top-[41px] z-10"
+
+// Sub-header cells
+className="px-2 py-1 border bg-gray-100 sticky top-[41px]"
+
+// Sub-header with min-width
+className="px-2 py-1 border bg-gray-100 sticky top-[41px] min-w-[140px]"
+className="px-2 py-1 border bg-gray-100 sticky top-[41px] min-w-[180px]"
+```
+
+### Tiered Pricing Table Headers
+```
+// Group header row
+className="bg-gray-100"
+
+// Alternating group colors
+className={`px-4 py-2 border text-left text-xs font-semibold ${groupIndex % 2 === 0 ? 'bg-blue-50' : 'bg-green-50'}`}
+
+// Column header row
+className="bg-gray-50 text-xs sticky top-[41px] z-10"
+
+// Column cells with width
+className="px-2 py-1 border bg-gray-50 min-w-[100px]"
+className="px-2 py-1 border bg-gray-50 min-w-[140px]"
+className="px-2 py-1 border bg-gray-50 min-w-[160px]"
+```
+
+### Table Body
+```
+// Standard row
+className="bg-white"
+
+// Uninteracted row (needs attention)
+className="bg-yellow-50"
+
+// Approval needed row
+className="bg-red-50"
+
+// Conditional row styling
+className={`${corridor.needsapproval ? 'bg-red-50' : !interactedCorridors.has(corridor.id) ? 'bg-yellow-50' : 'bg-white'}`}
+```
+
+### Table Cells
+```
+// Standard cell
+className="px-2 py-1 border"
+
+// Center aligned cell
+className="px-2 py-1 border text-center"
+
+// Right aligned cell
+className="px-2 py-1 border text-right"
+
+// Read-only cell
+className="px-2 py-1 border text-right bg-gray-50"
+
+// Editable cell
+className="px-2 py-1 border bg-primary-light"
+
+// Cost Plus specific cells
+className="px-2 py-1 border bg-blue-50"
+className="px-2 py-1 border text-right bg-blue-50"
+
+// Disabled/not applicable cell
+className="px-2 py-1 border bg-gray-100"
+
+// Cell with min-width
+className="px-2 py-1 border min-w-[140px]"
+
+// Sticky left cell (for fixed columns)
+className="px-2 py-1 border text-center sticky left-0 z-10 bg-white"
+
+// Wide action cell
+className="px-6 py-1 border text-center"
+className="px-6 py-1 border bg-gray-100 sticky top-[41px]"
+```
+
+### Special Table Styling
+```
+// Currency display field (read-only)
+className="w-full border p-1 rounded min-w-[120px] bg-gray-50 text-gray-700"
+```
+
+---
+
+## 6. MODAL/DIALOG STYLES
+
+### Modal Overlay
+```
+className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+```
+
+### Modal Container
+```
+className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4"
+```
+
+### Modal Content
+```
+// Modal header
+className="text-lg font-semibold mb-4"
+
+// Modal body text
+className="mb-6 text-gray-700"
+
+// Form sections in modal
+className="mb-4"
+className="mb-6"
+```
+
+---
+
+## 7. BADGE & STATUS STYLES
+
+### Approval Status Badges
+```
+// Needs approval (Yes)
+className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold"
+
+// Approved (No)
+className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold"
+
+// Not calculated yet
+className="text-gray-400 text-xs"
+```
+
+### Info Badges
+```
+// Standard info text
+className="text-sm font-medium text-gray-700"
+
+// Secondary info
+className="text-sm text-gray-500"
+
+// Debug info
+className="text-xs text-gray-600"
+```
+
+### Value Highlighting
+```
+// Cost Plus highlighted value
+className="font-medium text-blue-700"
+
+// Warning text
+className="text-[10px] text-red-600 mt-0.5"
+```
+
+---
+
+## 8. ALERT/WARNING STYLES
+
+### Warning Boxes
+```
+// Yellow warning container
+className="bg-yellow-50 border border-yellow-200 rounded px-3 py-2"
+
+// Warning text
+className="text-sm text-yellow-800 font-medium"
+```
+
+### Validation Messages
+```
+// Error message
+className="text-[10px] text-red-600 mt-0.5"
+```
+
+### Info Messages
+```
+// Descriptive text
+className="mb-6 text-gray-700"
+```
+
+### Warning Icons
+```
+// Warning symbol
+className="absolute -left-3 top-1/2 -translate-y-1/2 text-red-600 text-xs"
+```
+
+---
+
+## 9. FORM ELEMENT STYLES
+
+### Form Labels
+```
+// Standard label
+className="block text-sm font-medium mb-2"
+
+// Inline label with checkbox
+className="flex items-center space-x-2 text-sm"
+
+// Label text
+className="text-gray-700"
+```
+
+### Form Inputs in Modals
+```
+// Text/Number input
+className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+
+// Input with conditional padding for suffix
+className={`w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary ${includesPercentage ? 'pr-8' : ''}`}
+```
+
+### Input Wrappers
+```
+// Relative wrapper for suffix elements
+className="relative"
+```
+
+### Input Suffixes
+```
+// Percentage suffix
+className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm pointer-events-none"
+
+// Right-aligned suffix (closer to edge)
+className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm pointer-events-none"
+```
+
+---
+
+## 10. COLOR PALETTE REFERENCE
+
+### Brand Colors
+```
+bg-primary          // Primary brand color background
+text-primary        // Primary brand color text
+bg-primary-dark     // Darker variant for hover states
+bg-primary-light    // Lighter variant for editable fields
+bg-primary-medium   // Medium variant for section headers
+
+bg-secondary        // Secondary brand color background
+text-secondary      // Secondary brand color text
+
+bg-accent           // Accent color background
+text-accent         // Accent color text (if applicable)
+```
+
+### Semantic Colors
+```
+// Success
+bg-green-500        // Success background
+text-green-500      // Success text
+
+// Error/Danger
+bg-red-50           // Light error background
+bg-red-100          // Error field highlight
+bg-red-500          // Error button/badge
+bg-red-600          // Error button hover
+text-red-600        // Error text
+border-red-400      // Error border
+
+// Warning
+bg-yellow-50        // Light warning background
+text-yellow-800     // Warning text
+border-yellow-200   // Warning border
+
+// Info/Neutral
+bg-blue-50          // Light info background
+bg-blue-700         // Info text emphasis
+text-blue-700       // Info text
+```
+
+### Gray Scale
+```
+bg-gray-50          // Very light gray (read-only fields)
+bg-gray-100         // Light gray (table headers, disabled)
+text-gray-400       // Light gray text (placeholders)
+text-gray-500       // Medium gray text (labels)
+text-gray-600       // Darker gray text (values)
+text-gray-700       // Dark gray text (body)
+border-gray-200     // Light gray border
+border-gray-300     // Standard gray border
+border-gray-400     // Darker gray border
+```
+
+### Special Backgrounds
+```
+bg-white            // White background
+bg-black            // Black (for modal overlays)
+bg-opacity-50       // 50% opacity modifier
+bg-transparent      // Transparent background
+```
+
+---
+
+## 11. UTILITY CLASSES
+
+### Spacing
+```
+// Padding
+p-1, p-2, p-4, p-6                          // All sides padding
+px-2, px-3, px-4, px-6                      // Horizontal padding
+py-1, py-2                                   // Vertical padding
+pr-6, pr-8                                   // Right padding (for input suffixes)
+
+// Margin
+mb-2, mb-4, mb-6                            // Bottom margin
+mt-0.5                                       // Tiny top margin
+mx-4                                         // Horizontal margin (for centering)
+
+// Spacing between children
+space-x-2, space-x-3, space-x-4             // Horizontal spacing
+```
+
+### Sizing
+```
+// Width
+w-4, w-28                                    // Fixed width
+w-full                                       // 100% width
+min-w-[100px], min-w-[120px], min-w-[140px], 
+min-w-[160px], min-w-[180px]                // Minimum widths
+max-w-md                                     // Maximum width (modal)
+
+// Height
+h-4                                          // Fixed height
+max-h-[70vh]                                 // Maximum height (scrollable areas)
+```
+
+### Positioning
+```
+// Position types
+fixed, absolute, relative, sticky
+
+// Positioning
+inset-0                                      // Top/right/bottom/left: 0
+top-0, top-[41px], top-1/2                  // Top positioning
+left-0                                       // Left positioning
+right-2, right-3                             // Right positioning
+-left-3                                      // Negative left (for icons)
+
+// Z-index
+z-10, z-20, z-50                            // Layering
+```
+
+### Display & Layout
+```
+// Display
+block, flex, hidden
+
+// Flex properties
+items-center, items-end                     // Vertical alignment
+justify-between, justify-center, justify-end // Horizontal alignment
+
+// Overflow
+overflow-auto                                // Scrollable when needed
+```
+
+### Border & Rounding
+```
+// Borders
+border                                       // Standard border
+border-2                                     // Thicker border
+
+// Border radius
+rounded                                      // Standard rounding
+rounded-lg, rounded-t-lg                    // Larger rounding
+
+// Shadows
+shadow-lg                                    // Large shadow (modals)
+```
+
+### Typography
+```
+// Font size
+text-xs, text-sm, text-lg, text-2xl
+
+// Font weight
+font-medium, font-semibold, font-bold
+
+// Text alignment
+text-left, text-right, text-center
+```
+
+### States & Interactions
+```
+// Focus
+focus:outline-none
+focus:ring-2
+focus:ring-primary
+
+// Hover
+hover:bg-primary-dark
+hover:bg-gray-50
+hover:bg-red-600
+
+// Cursor
+cursor-not-allowed
+cursor-not-allowed
+pointer-events-none
+
+// Opacity
+opacity-50, opacity-60
+
+// Transform
+transform
+-translate-y-1/2                             // Center vertically
+```
+
+---
+
+## USAGE EXAMPLES
+
+### Example 1: Primary Action Button
+```jsx
+<button className="bg-primary text-secondary px-4 py-2 rounded hover:bg-primary-dark transition-colors">
+  Save Changes
+</button>
+```
+
+### Example 2: Input Field with Percentage
+```jsx
+<div className="relative">
+  <input
+    type="number"
+    className="w-28 p-1 pr-6 text-right border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+    value={value}
+  />
+  <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm pointer-events-none">
+    %
+  </span>
+</div>
+```
+
+### Example 3: Modal Structure
+```jsx
+<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+    <h3 className="text-lg font-semibold mb-4">Modal Title</h3>
+    <p className="mb-6 text-gray-700">Modal content here...</p>
+    <div className="flex justify-end space-x-3">
+      <button className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50">
+        Cancel
+      </button>
+      <button className="px-4 py-2 bg-primary text-secondary rounded hover:bg-primary-dark">
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
+```
+
+### Example 4: Sticky Table Header
+```jsx
+<table className="min-w-[1500px] bg-white relative">
+  <thead className="sticky top-0 z-10">
+    <tr className="bg-gray-100 text-xs sticky top-[41px] z-10">
+      <th className="px-2 py-1 border bg-gray-100 sticky top-[41px]">
+        Column Name
+      </th>
+    </tr>
+  </thead>
+</table>
+```
+
+### Example 5: Status Badge
+```jsx
+{needsApproval ? (
+  <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">Yes</span>
+) : (
+  <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">No</span>
+)}
+```
+
+### Example 6: Warning Alert
+```jsx
+<div className="bg-yellow-50 border border-yellow-200 rounded px-3 py-2">
+  <div className="text-sm text-yellow-800 font-medium">
+    ⚠️ Warning message here
+  </div>
+</div>
+```
+
+---
+
+## NOTES
+
+1. **Tailwind Configuration**: Make sure your target project has Tailwind CSS configured with the custom colors (primary, secondary, accent, primary-dark, primary-light, primary-medium) defined in your `tailwind.config.js`.
+
+2. **Consistency**: These styles maintain consistent spacing (using Tailwind's spacing scale), consistent border styling, and consistent interaction states.
+
+3. **Accessibility**: Many inputs include `focus:ring-2` for keyboard navigation visibility and proper semantic HTML.
+
+4. **Responsive Design**: The modal uses `mx-4` for horizontal margins on small screens and `max-w-md` for larger screens.
+
+5. **Color Semantics**: Colors follow standard conventions:
+   - Red: Errors, deletions, critical warnings
+   - Yellow: Warnings, uninteracted items
+   - Green: Success, approval
+   - Blue: Info, Cost Plus feature-specific items
+   - Gray: Neutral, read-only, disabled
+
+---
+
+## TAILWIND CONFIG REQUIREMENTS
+
+Add these custom colors to your `tailwind.config.js`:
+
+```javascript
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: '#your-primary-color',
+          dark: '#your-primary-dark-color',
+          light: '#your-primary-light-color',
+          medium: '#your-primary-medium-color',
+        },
+        secondary: {
+          DEFAULT: '#your-secondary-color',
+        },
+        accent: {
+          DEFAULT: '#your-accent-color',
+        },
+      },
+    },
+  },
+}
+```
+
+---
+
+End of Styling Guide

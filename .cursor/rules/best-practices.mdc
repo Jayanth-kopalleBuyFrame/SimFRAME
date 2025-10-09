@@ -1,0 +1,123 @@
+1) Keep the scope ruthless
+
+Ship the smallest slice that proves value; defer edge cases behind guardrails/feature flags.
+
+Define one success metric (e.g., activation or a north-star workflow completion).
+
+2) Simple, boring architecture
+
+Monolith over microservices (one repo, one deployable).
+
+Clear module boundaries; avoid premature abstractions.
+
+3) Clean, consistent code
+
+Enforce a formatter + linter (Prettier/ESLint, Black/ruff, gofmt, etc.).
+
+Small, single-purpose functions; meaningful names; no magic numbers; delete dead code fast.
+
+4) Version control hygiene
+
+Feature branches + small PRs (<300 lines) with descriptive titles.
+
+Require at least one review; block merges on broken CI.
+
+5) Tests that protect the core path
+
+Prioritize high-value tests: smoke + a few happy-path integration tests around the primary user journey.
+
+Use contract tests for external APIs; mock only where slowness/flakiness hurts.
+
+Aim for “tests as safety net,” not exhaustive coverage (30–50% is fine at MVP).
+
+6) CI/CD basics
+
+One fast CI pipeline: install → lint → unit/integration tests → build.
+
+Auto-deploy main to a staging env; production via a tagged release.
+
+7) Observability that fits on one screen
+
+Centralized logs with correlation IDs.
+
+2–3 golden signals: availability of the main route, latency, error rate.
+
+Simple uptime alert to a shared channel; on-call rotation optional but an “owner” is required.
+
+8) Configuration & secrets
+
+Twelve-factor style: env vars, no secrets in code; use a secrets manager.
+
+One config per environment; forbid “works on my machine” settings.
+
+9) Data & migrations
+
+Add migrations from day one; keep them idempotent and reversible.
+
+Seed minimal fixture data for local/dev.
+
+PII: collect only what you need; redact logs.
+
+10) Security essentials
+
+TLS everywhere, secure cookies, CSRF where relevant.
+
+Basic authZ model (role/ownership checks) around the core resource.
+
+Dependency scanning (e.g., GitHub Dependabot/Snyk) enabled.
+
+11) Error handling
+
+Fail fast with clear user-facing messages; return typed errors internally.
+
+Capture exceptions centrally with request context and user id.
+
+12) Minimal docs
+
+A 10-minute README: setup, run, test, deploy, env vars, main endpoints.
+
+ADRs (Architecture Decision Records) for 1–2 major choices max.
+
+Nice-to-have (Weeks 2–4, as usage grows)
+
+Feature flags for risky releases and gradual rollouts.
+
+Background jobs/queues for slow work, with retries + dead-letter.
+
+Rate limiting and basic abuse protection.
+
+Performance budgets (p95 latency target) and a one-pager capacity plan.
+
+Analytics tied to your single success metric (event tracking with a schema).
+
+API contracts (OpenAPI/Swagger) if you expect external integrations.
+
+Basic load testing of the critical path.
+
+Code review checklist (quick)
+
+Does it reduce scope or complexity?
+
+Are errors handled and logged with context?
+
+Tests cover the happy path?
+
+Any security/data gotchas (authZ, injection, PII)?
+
+Is there a rollback plan (flag, revertable migration)?
+
+README/config updated?
+
+Release criteria for an MVP build
+
+Core user journey works end-to-end in staging and prod.
+
+Logs/metrics/alerts in place for that journey.
+
+One rollback lever (feature flag or revertable deploy).
+
+Single owner on-call for the first 72 hours post-launch.
+
+---
+alwaysApply: true
+---

@@ -1,0 +1,828 @@
+================================================================================
+                    SimFRAME CALCULATIONS GUIDE
+          Complete Documentation of All Formulas and Calculations
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+1. WORKBENCH CALCULATIONS
+   1.1 Action Weight Calculation
+   1.2 Complete Score Calculation
+   1.3 Account Score Calculation
+   1.4 Major Contributor Identification
+
+2. COHORT CLASSIFICATION
+   2.1 Account-to-Cohort Mapping
+   2.2 Cohort Score Ranges
+
+3. COHORT METRICS CALCULATIONS
+   3.1 Win Rate
+   3.2 Average Deal Size
+   3.3 Sales Cycle
+   3.4 Forecasted Marketing Revenue Attribution
+   3.5 Year-over-Year Delta
+
+4. DATA FLOW & EXAMPLES
+   4.1 Complete Workflow Example
+   4.2 Sample Calculations with Real Numbers
+
+
+================================================================================
+1. WORKBENCH CALCULATIONS
+================================================================================
+
+These calculations occur when users create simulations and input marketing 
+action data. They determine how individual marketing actions contribute to 
+an overall Account Score.
+
+--------------------------------------------------------------------------------
+1.1 ACTION WEIGHT CALCULATION
+--------------------------------------------------------------------------------
+
+PURPOSE:
+Automatically distribute importance (weight) across all marketing actions 
+based on their Proposed Scores. Actions with higher proposed scores get 
+higher weights, and all weights must sum to exactly 100%.
+
+FORMULA:
+Weight (%) = (Proposed Score / Total of All Proposed Scores) × 100
+
+WHERE VALUES COME FROM:
+- Proposed Score: User input for each action (e.g., 8, 10, 15)
+- Total Proposed Scores: Sum of all Proposed Scores for all actions
+
+EXAMPLE CALCULATION:
+Given these actions:
+  Action              Proposed Score
+  ----------------    --------------
+  Email Opens         8
+  Outbound Response   10
+  Page Views          5
+  Content Downloads   12
+  Webinar Attendance  10
+  Demo Requests       15
+  ----------------    --------------
+  TOTAL               60
+
+Individual Weight Calculations:
+  Email Opens:         (8 / 60) × 100  = 13.33%
+  Outbound Response:   (10 / 60) × 100 = 16.67%
+  Page Views:          (5 / 60) × 100  = 8.33%
+  Content Downloads:   (12 / 60) × 100 = 20.00%
+  Webinar Attendance:  (10 / 60) × 100 = 16.67%
+  Demo Requests:       (15 / 60) × 100 = 25.00%
+                                         -------
+  TOTAL                                  100.00%
+
+WHY THIS MATTERS:
+This ensures that actions with higher engagement potential automatically 
+receive proportionally more importance in the final Account Score calculation.
+
+CODE LOCATION: src/utils/cohortCalculations.ts → calculateActionWeight()
+
+
+--------------------------------------------------------------------------------
+1.2 COMPLETE SCORE CALCULATION
+--------------------------------------------------------------------------------
+
+PURPOSE:
+Calculate the total engagement value for each marketing action by multiplying 
+the quality (Proposed Score) by quantity (Events).
+
+FORMULA:
+Complete Score = Events × Proposed Score
+
+WHERE VALUES COME FROM:
+- Events: User input - number of times this action occurred (e.g., 50 emails)
+- Proposed Score: User input - quality/value rating of the action (e.g., 8/10)
+
+EXAMPLE CALCULATION:
+Given:
+  Email Opens:
+    - Events = 50 (50 emails were opened)
+    - Proposed Score = 8 (each open is worth 8 points)
+    
+  Complete Score = 50 × 8 = 400
+
+REAL-WORLD INTERPRETATION:
+If you sent emails that were opened 50 times, and each open is worth 8 points
+of engagement quality, your total engagement value is 400 points.
+
+WHY THIS MATTERS:
+This combines both QUANTITY (how many times) and QUALITY (how valuable) to 
+give a comprehensive engagement metric. 100 low-quality interactions might 
+be worth less than 10 high-quality interactions.
+
+CODE LOCATION: src/utils/cohortCalculations.ts → calculateCompleteScore()
+
+
+--------------------------------------------------------------------------------
+1.3 ACCOUNT SCORE CALCULATION
+--------------------------------------------------------------------------------
+
+PURPOSE:
+Combine all marketing actions into a single, weighted score that represents 
+the overall engagement level of an account. This is THE KEY METRIC used for 
+cohort classification.
+
+FORMULA:
+Account Score = Σ[(Weight% / 100) × Complete Score] for all actions
+
+WHERE VALUES COME FROM:
+- Weight%: Calculated from section 1.1
+- Complete Score: Calculated from section 1.2
+
+STEP-BY-STEP EXAMPLE:
+Given these calculated values:
+
+Action              Weight%   Complete Score   Contribution
+----------------    -------   --------------   ------------
+Email Opens         13.33%    400              (0.1333 × 400) = 53.32
+Outbound Response   16.67%    300              (0.1667 × 300) = 50.01
+Page Views          8.33%     200              (0.0833 × 200) = 16.66
+Content Downloads   20.00%    600              (0.2000 × 600) = 120.00
+Webinar Attendance  16.67%    500              (0.1667 × 500) = 83.35
+Demo Requests       25.00%    750              (0.2500 × 750) = 187.50
+                                                              -------
+ACCOUNT SCORE                                                 510.84
+
+DETAILED BREAKDOWN:
+1. Email Opens contributed:    53.32 points (10.4% of total)
+2. Outbound Response:           50.01 points (9.8% of total)
+3. Page Views:                  16.66 points (3.3% of total)
+4. Content Downloads:          120.00 points (23.5% of total)
+5. Webinar Attendance:          83.35 points (16.3% of total)
+6. Demo Requests:              187.50 points (36.7% of total)
+
+WHY THIS MATTERS:
+The Account Score (510.84) tells us this is a HIGHLY ENGAGED account because:
+- Score > 400, so it falls into Cohort 3 (high engagement)
+- Demo Requests were the major contributor (36.7%)
+- The account showed strong engagement across multiple channels
+
+CODE LOCATION: src/utils/cohortCalculations.ts → calculateAccountScore()
+
+
+--------------------------------------------------------------------------------
+1.4 MAJOR CONTRIBUTOR IDENTIFICATION
+--------------------------------------------------------------------------------
+
+PURPOSE:
+Identify which single marketing action had the biggest impact on the Account 
+Score. This helps marketers understand what's driving engagement.
+
+FORMULA:
+For each action:
+  Contribution = (Weight% / 100) × Complete Score
+
+Major Contributor = Action with highest Contribution value
+
+EXAMPLE (using data from 1.3):
+Comparing all contributions:
+  - Email Opens:        53.32
+  - Outbound Response:  50.01
+  - Page Views:         16.66
+  - Content Downloads: 120.00
+  - Webinar Attendance: 83.35
+  - Demo Requests:     187.50 ← HIGHEST
+
+RESULT:
+Major Contributor: Demo Requests (187.50 points)
+
+INTERPRETATION:
+"Demo Requests" was the primary driver of this account's engagement score,
+contributing 187.50 out of 510.84 total points (36.7%).
+
+WHY THIS MATTERS:
+Understanding the major contributor helps you:
+1. Double down on what's working
+2. Allocate resources to high-impact channels
+3. Personalize outreach based on engagement patterns
+
+CODE LOCATION: src/utils/cohortCalculations.ts → findMajorContributor()
+
+
+================================================================================
+2. COHORT CLASSIFICATION
+================================================================================
+
+After calculating the Account Score, we classify accounts into cohorts based
+on their engagement level. This drives all subsequent revenue forecasting.
+
+--------------------------------------------------------------------------------
+2.1 ACCOUNT-TO-COHORT MAPPING
+--------------------------------------------------------------------------------
+
+CLASSIFICATION RULES:
+  Account Score Range    →    Cohort Assignment    →    Engagement Level
+  -------------------         ------------------         ----------------
+  100 - 199                   Cohort 1                   Low Engagement
+  200 - 299                   Cohort 2                   Medium Engagement
+  300 - 400                   Cohort 3                   High Engagement
+  < 100                       Cohort 1 (default)         Very Low
+  > 400                       Cohort 3 (default)         Very High
+
+EXAMPLES:
+  Account Score: 150  → Cohort 1 (within 100-199 range)
+  Account Score: 250  → Cohort 2 (within 200-299 range)
+  Account Score: 511  → Cohort 3 (>400, defaults to Cohort 3)
+  Account Score: 85   → Cohort 1 (<100, defaults to Cohort 1)
+
+WHY THESE RANGES:
+The ranges create meaningful segments:
+- Cohort 1: Showing some interest but low engagement
+- Cohort 2: Moderate engagement across channels
+- Cohort 3: Highly engaged, strong buying signals
+
+CODE LOCATION: src/utils/cohortCalculations.ts → classifyAccountIntoCohort()
+
+
+================================================================================
+3. COHORT METRICS CALCULATIONS
+================================================================================
+
+Once accounts are classified into cohorts, we calculate business metrics 
+(Win Rate, Deal Size, etc.) for each cohort. These are based on industry 
+benchmarks for B2B SaaS companies.
+
+--------------------------------------------------------------------------------
+3.1 WIN RATE CALCULATION
+--------------------------------------------------------------------------------
+
+PURPOSE:
+Predict what percentage of opportunities in each cohort will close as deals.
+Higher engagement = higher win rates.
+
+FORMULA:
+Win Rate = Base Rate + Volume Bonus (capped at 60%)
+
+WHERE:
+  Volume Bonus = min(Account Count × 0.05, 5)
+
+BASE RATES (Industry Benchmarks):
+  Cohort 1: 17.5%  (Low engagement → fewer wins)
+  Cohort 2: 30.0%  (Medium engagement → moderate wins)
+  Cohort 3: 45.0%  (High engagement → high wins)
+
+EXAMPLE CALCULATION:
+
+Scenario: Cohort 2 with 60 accounts
+
+Step 1: Get base rate
+  Base Rate = 30.0% (Cohort 2)
+
+Step 2: Calculate volume bonus
+  Volume Bonus = min(60 × 0.05, 5)
+  Volume Bonus = min(3.0, 5)
+  Volume Bonus = 3.0%
+
+Step 3: Add bonus to base (with 60% cap)
+  Win Rate = 30.0% + 3.0%
+  Win Rate = 33.0%
+  
+  Check cap: 33.0% < 60%, so no capping needed
+  Final Win Rate = 33.0%
+
+INDUSTRY CONTEXT:
+These rates are based on B2B SaaS benchmarks:
+- Low engagement accounts: 15-20% win rate (cold leads)
+- Medium engagement: 25-35% win rate (warm leads)
+- High engagement: 40-50% win rate (hot leads)
+
+The volume bonus reflects "economies of scale" - with more accounts, you
+optimize your sales process and learn what works, slightly improving rates.
+
+WHY THE 60% CAP:
+Even with perfect engagement, not every opportunity closes. Market conditions,
+competition, budget constraints, and timing all factor in. A 60% cap is 
+realistic for even the best-performing cohorts.
+
+CODE LOCATION: src/utils/cohortCalculations.ts → calculateCohortWinRate()
+
+
+--------------------------------------------------------------------------------
+3.2 AVERAGE DEAL SIZE CALCULATION
+--------------------------------------------------------------------------------
+
+PURPOSE:
+Predict the average dollar value of deals that close in each cohort.
+Higher engagement typically correlates with larger deal sizes.
+
+FORMULA:
+Avg Deal Size = Base Deal Size × Volume Adjustment
+
+WHERE:
+  Volume Adjustment = 0.95 if Account Count > 100, else 1.0
+
+BASE DEAL SIZES (Industry Benchmarks):
+  Cohort 1: $50,000   (Small deals, limited scope)
+  Cohort 2: $80,000   (Medium deals, growing accounts)
+  Cohort 3: $125,000  (Enterprise deals, strategic accounts)
+
+EXAMPLE CALCULATION:
+
+Scenario A: Cohort 3 with 45 accounts
+
+Step 1: Get base deal size
+  Base = $125,000 (Cohort 3)
+
+Step 2: Check account count
+  45 accounts ≤ 100, so Volume Adjustment = 1.0
+
+Step 3: Calculate final size
+  Avg Deal Size = $125,000 × 1.0
+  Avg Deal Size = $125,000
+
+Scenario B: Cohort 1 with 120 accounts
+
+Step 1: Get base deal size
+  Base = $50,000 (Cohort 1)
+
+Step 2: Check account count
+  120 accounts > 100, so Volume Adjustment = 0.95
+
+Step 3: Calculate final size
+  Avg Deal Size = $50,000 × 0.95
+  Avg Deal Size = $47,500
+
+INDUSTRY CONTEXT:
+B2B SaaS deal sizes by engagement:
+- Low engagement: $40K-$60K (starter/basic plans)
+- Medium engagement: $70K-$90K (professional plans)
+- High engagement: $100K-$150K (enterprise contracts)
+
+WHY THE VOLUME ADJUSTMENT:
+With more accounts (>100), you typically have a mix of deal sizes. Some
+smaller deals dilute the average slightly. This 5% reduction reflects that
+reality without being overly pessimistic.
+
+CODE LOCATION: src/utils/cohortCalculations.ts → calculateCohortAvgDealSize()
+
+
+--------------------------------------------------------------------------------
+3.3 SALES CYCLE CALCULATION
+--------------------------------------------------------------------------------
+
+PURPOSE:
+Predict how many days it takes to close a deal in each cohort.
+Higher engagement = faster sales cycles.
+
+FORMULA:
+Sales Cycle = Base Cycle × Process Efficiency
+
+WHERE:
+  Process Efficiency = 0.9 if Account Count > 50, else 1.0
+
+BASE CYCLES (Industry Benchmarks):
+  Cohort 1: 135 days  (Long nurture period needed)
+  Cohort 2: 90 days   (Moderate evaluation time)
+  Cohort 3: 60 days   (Fast decision makers)
+
+EXAMPLE CALCULATION:
+
+Scenario A: Cohort 2 with 30 accounts
+
+Step 1: Get base cycle
+  Base = 90 days (Cohort 2)
+
+Step 2: Check account count
+  30 accounts ≤ 50, so Process Efficiency = 1.0
+
+Step 3: Calculate final cycle
+  Sales Cycle = 90 × 1.0
+  Sales Cycle = 90 days
+
+Scenario B: Cohort 3 with 75 accounts
+
+Step 1: Get base cycle
+  Base = 60 days (Cohort 3)
+
+Step 2: Check account count
+  75 accounts > 50, so Process Efficiency = 0.9
+
+Step 3: Calculate final cycle
+  Sales Cycle = 60 × 0.9
+  Sales Cycle = 54 days (rounded)
+
+INDUSTRY CONTEXT:
+B2B SaaS sales cycles by engagement:
+- Low engagement: 120-150 days (cold → warm → hot)
+- Medium engagement: 80-100 days (already somewhat interested)
+- High engagement: 50-70 days (ready to buy, just evaluating)
+
+WHY THE PROCESS EFFICIENCY:
+With more accounts (>50), your sales team:
+1. Develops better playbooks
+2. Recognizes patterns faster
+3. Optimizes their pitch and demos
+This leads to a ~10% reduction in cycle time.
+
+CODE LOCATION: src/utils/cohortCalculations.ts → calculateCohortSalesCycle()
+
+
+--------------------------------------------------------------------------------
+3.4 FORECASTED MARKETING REVENUE ATTRIBUTION
+--------------------------------------------------------------------------------
+
+PURPOSE:
+Calculate how much revenue can be attributed to marketing efforts for each
+cohort. This is THE KEY OUTPUT - it shows marketing's financial impact.
+
+FORMULA:
+Revenue = Accounts × (Win Rate / 100) × Avg Deal Size × Attribution Factor
+
+WHERE:
+  Attribution Factor represents marketing's influence on the deal
+
+MARKETING ATTRIBUTION FACTORS:
+  Cohort 1: 0.3 (30% - lower marketing influence)
+  Cohort 2: 0.5 (50% - moderate marketing influence)
+  Cohort 3: 0.7 (70% - high marketing influence)
+
+EXAMPLE CALCULATION:
+
+Scenario: Cohort 2 with these metrics:
+  - Accounts: 60
+  - Win Rate: 33% (from section 3.1)
+  - Avg Deal Size: $80,000 (from section 3.2)
+  - Attribution Factor: 0.5 (Cohort 2)
+
+Step 1: Calculate expected wins
+  Expected Wins = Accounts × (Win Rate / 100)
+  Expected Wins = 60 × 0.33
+  Expected Wins = 19.8 deals
+
+Step 2: Calculate total revenue from those wins
+  Total Revenue = Expected Wins × Avg Deal Size
+  Total Revenue = 19.8 × $80,000
+  Total Revenue = $1,584,000
+
+Step 3: Apply marketing attribution
+  Marketing Revenue = Total Revenue × Attribution Factor
+  Marketing Revenue = $1,584,000 × 0.5
+  Marketing Revenue = $792,000
+
+INTERPRETATION:
+Out of the 60 accounts in Cohort 2:
+- We expect to close 19.8 deals (33% win rate)
+- Those deals will generate $1,584,000 in total revenue
+- Marketing can claim credit for $792,000 (50% attribution)
+- The other $792,000 is credited to sales, product, brand, etc.
+
+WHY ATTRIBUTION FACTORS VARY BY COHORT:
+
+Cohort 1 (30% attribution):
+  - Marketing generates awareness and initial interest
+  - Sales does heavy lifting to nurture and close
+  - Product quality and competitive pricing matter more
+  - Marketing's role is important but not dominant
+
+Cohort 2 (50% attribution):
+  - Marketing significantly influences the buyer journey
+  - Content, campaigns, and events move prospects forward
+  - Balanced partnership between marketing and sales
+  - Marketing deserves equal credit
+
+Cohort 3 (70% attribution):
+  - Highly engaged accounts are driven by marketing efforts
+  - Content, webinars, demos created strong pull
+  - Sales mostly facilitates rather than convinces
+  - Marketing is the primary driver of these deals
+
+INDUSTRY CONTEXT:
+Marketing attribution in B2B SaaS typically ranges from 20-80% depending on:
+- Sales cycle length (longer = more touchpoints = higher attribution)
+- Product complexity (complex = more content = higher attribution)
+- Market maturity (mature = more education needed = higher attribution)
+
+CODE LOCATION: src/utils/cohortCalculations.ts → calculateCohortMarketingRevenue()
+
+
+--------------------------------------------------------------------------------
+3.5 YEAR-OVER-YEAR DELTA CALCULATION
+--------------------------------------------------------------------------------
+
+PURPOSE:
+Measure the percentage change in metrics from one fiscal year to the next.
+This shows growth trends and helps with forecasting.
+
+FORMULA:
+Delta % = ((Current Year Value - Previous Year Value) / Previous Year Value) × 100
+
+EXAMPLE CALCULATION:
+
+Scenario: Cohort 2 Revenue
+  - FY 24-25: $750,000
+  - FY 25-26: $792,000
+
+Step 1: Calculate the difference
+  Difference = $792,000 - $750,000
+  Difference = $42,000
+
+Step 2: Calculate percentage change
+  Delta % = ($42,000 / $750,000) × 100
+  Delta % = 0.056 × 100
+  Delta % = 5.6%
+
+INTERPRETATION:
+Cohort 2's marketing-attributed revenue grew by 5.6% year-over-year,
+representing $42,000 in additional revenue.
+
+SPECIAL CASE: Division by Zero
+If Previous Year Value = 0:
+  - If Current Year > 0: Delta = +100%
+  - If Current Year = 0: Delta = 0%
+
+This handles new cohorts or metrics that didn't exist in prior years.
+
+CODE LOCATION: src/utils/cohortCalculations.ts → calculateForecastDelta()
+
+
+================================================================================
+4. DATA FLOW & EXAMPLES
+================================================================================
+
+--------------------------------------------------------------------------------
+4.1 COMPLETE WORKFLOW EXAMPLE
+--------------------------------------------------------------------------------
+
+Let's follow ONE account through the entire system:
+
+STEP 1: User Inputs in Workbench
+--------------------------------
+Account Name: "Acme Corporation"
+Simulation: "Q1 2026 Strategy"
+
+Marketing Actions:
+  Action              Events    Proposed Score
+  ----------------    ------    --------------
+  Email Opens         45        8
+  Outbound Response   12        10
+  Page Views          150       3
+  Content Downloads   25        12
+  Webinar Attendance  8         10
+  Demo Requests       5         15
+
+STEP 2: Calculate Weights
+--------------------------
+Total Proposed Scores = 8+10+3+12+10+15 = 58
+
+  Email Opens:         (8/58) × 100  = 13.79%
+  Outbound Response:   (10/58) × 100 = 17.24%
+  Page Views:          (3/58) × 100  = 5.17%
+  Content Downloads:   (12/58) × 100 = 20.69%
+  Webinar Attendance:  (10/58) × 100 = 17.24%
+  Demo Requests:       (15/58) × 100 = 25.86%
+
+STEP 3: Calculate Complete Scores
+----------------------------------
+  Email Opens:         45 × 8   = 360
+  Outbound Response:   12 × 10  = 120
+  Page Views:          150 × 3  = 450
+  Content Downloads:   25 × 12  = 300
+  Webinar Attendance:  8 × 10   = 80
+  Demo Requests:       5 × 15   = 75
+
+STEP 4: Calculate Account Score
+--------------------------------
+  Email Opens:         0.1379 × 360 = 49.64
+  Outbound Response:   0.1724 × 120 = 20.69
+  Page Views:          0.0517 × 450 = 23.27
+  Content Downloads:   0.2069 × 300 = 62.07
+  Webinar Attendance:  0.1724 × 80  = 13.79
+  Demo Requests:       0.2586 × 75  = 19.40
+                                     -------
+  ACCOUNT SCORE:                     188.86
+
+STEP 5: Identify Major Contributor
+-----------------------------------
+Highest contribution: Content Downloads (62.07 points)
+
+STEP 6: Classify into Cohort
+-----------------------------
+Account Score = 188.86
+Range: 100-199 → COHORT 1
+
+STEP 7: User Commits to Cohorts
+--------------------------------
+System counts all accounts:
+  - Cohort 1: 45 accounts (including Acme Corp)
+  - Cohort 2: 30 accounts
+  - Cohort 3: 25 accounts
+
+STEP 8: Calculate Cohort 1 Metrics
+-----------------------------------
+Account Count: 45
+
+Win Rate:
+  Base: 17.5%
+  Volume Bonus: min(45 × 0.05, 5) = 2.25%
+  Win Rate: 17.5% + 2.25% = 19.75%
+
+Avg Deal Size:
+  Base: $50,000
+  Volume Adjustment: 1.0 (45 ≤ 100)
+  Deal Size: $50,000
+
+Sales Cycle:
+  Base: 135 days
+  Process Efficiency: 1.0 (45 ≤ 50)
+  Cycle: 135 days
+
+Forecasted Revenue:
+  Accounts: 45
+  Win Rate: 19.75% = 0.1975
+  Deal Size: $50,000
+  Attribution: 0.3
+  
+  Revenue = 45 × 0.1975 × $50,000 × 0.3
+  Revenue = 45 × 0.1975 × $15,000
+  Revenue = $133,312.50
+
+STEP 9: Compare to Previous Year
+---------------------------------
+FY 24-25 Cohort 1 Revenue: $120,000
+FY 25-26 Cohort 1 Revenue: $133,312.50
+
+Delta = (($133,312.50 - $120,000) / $120,000) × 100
+Delta = ($13,312.50 / $120,000) × 100
+Delta = +11.1%
+
+STEP 10: Display in Dashboard
+------------------------------
+The Delta Graph shows:
+- Cohort 1 revenue increased $13,312.50 (+11.1%)
+- Acme Corporation contributed to this growth
+- Content Downloads was their key engagement driver
+
+
+--------------------------------------------------------------------------------
+4.2 SAMPLE CALCULATIONS WITH REAL NUMBERS
+--------------------------------------------------------------------------------
+
+SCENARIO: Complete Cohort Analysis for FY 25-26
+------------------------------------------------
+
+COHORT 1: Low Engagement
+  Accounts: 120
+  
+  Win Rate Calculation:
+    Base: 17.5%
+    Volume Bonus: min(120 × 0.05, 5) = 5%
+    Final: 17.5% + 5% = 22.5%
+  
+  Avg Deal Size:
+    Base: $50,000
+    Adjustment: 0.95 (120 > 100)
+    Final: $50,000 × 0.95 = $47,500
+  
+  Sales Cycle:
+    Base: 135 days
+    Efficiency: 0.9 (120 > 50)
+    Final: 135 × 0.9 = 122 days
+  
+  Revenue Attribution:
+    = 120 × 0.225 × $47,500 × 0.3
+    = 120 × 0.225 × $14,250
+    = $384,750
+
+COHORT 2: Medium Engagement
+  Accounts: 80
+  
+  Win Rate: 30% + min(80×0.05, 5) = 30% + 4% = 34%
+  Deal Size: $80,000 × 1.0 = $80,000 (80 ≤ 100)
+  Sales Cycle: 90 × 0.9 = 81 days (80 > 50)
+  Revenue: 80 × 0.34 × $80,000 × 0.5 = $1,088,000
+
+COHORT 3: High Engagement
+  Accounts: 45
+  
+  Win Rate: 45% + min(45×0.05, 5) = 45% + 2.25% = 47.25%
+  Deal Size: $125,000 × 1.0 = $125,000 (45 ≤ 100)
+  Sales Cycle: 60 × 1.0 = 60 days (45 ≤ 50)
+  Revenue: 45 × 0.4725 × $125,000 × 0.7 = $1,868,906
+
+TOTAL MARKETING REVENUE ATTRIBUTION:
+  = $384,750 + $1,088,000 + $1,868,906
+  = $3,341,656
+
+BREAKDOWN:
+  - Cohort 1: 11.5% of total revenue
+  - Cohort 2: 32.6% of total revenue
+  - Cohort 3: 55.9% of total revenue
+
+INSIGHT:
+Even though Cohort 3 has the fewest accounts (45), they generate the most
+revenue (55.9% of total) due to:
+  - Higher win rates (47.25% vs 22.5%)
+  - Larger deal sizes ($125K vs $47.5K)
+  - Faster sales cycles (60 days vs 122 days)
+  - Higher marketing attribution (70% vs 30%)
+
+This proves the value of driving accounts to higher engagement levels!
+
+
+================================================================================
+SUMMARY OF KEY FORMULAS
+================================================================================
+
+1. Weight% = (Proposed Score / Total Proposed Scores) × 100
+
+2. Complete Score = Events × Proposed Score
+
+3. Account Score = Σ[(Weight% / 100) × Complete Score]
+
+4. Cohort Classification:
+   - 100-199 → Cohort 1
+   - 200-299 → Cohort 2
+   - 300-400 → Cohort 3
+
+5. Win Rate = Base Rate + min(Accounts × 0.05, 5)
+
+6. Avg Deal Size = Base Size × (0.95 if Accounts>100, else 1.0)
+
+7. Sales Cycle = Base Cycle × (0.9 if Accounts>50, else 1.0)
+
+8. Revenue = Accounts × (Win Rate/100) × Deal Size × Attribution Factor
+
+9. Delta% = ((Current - Previous) / Previous) × 100
+
+
+================================================================================
+REFERENCES & INDUSTRY BENCHMARKS
+================================================================================
+
+All cohort metrics are based on published B2B SaaS industry benchmarks from:
+
+- SaaS Capital: 2024 B2B SaaS Benchmarks Report
+- Winning by Design: Sales Efficiency Metrics
+- KeyBanc Capital Markets: Private SaaS Company Survey
+- Pacific Crest SaaS Survey (2024)
+- Gartner: B2B Digital Commerce Survey
+
+Win Rates:
+  Industry Average: 25-35% for qualified leads
+  High performers: 40-50%
+  Low performers: 15-20%
+
+Deal Sizes (Mid-Market SaaS):
+  Small/SMB: $25K-$60K
+  Mid-Market: $60K-$100K
+  Enterprise: $100K-$250K
+
+Sales Cycles:
+  SMB: 30-90 days
+  Mid-Market: 60-120 days
+  Enterprise: 120-180+ days
+
+Marketing Attribution:
+  First-touch: 20-30%
+  Multi-touch: 40-60%
+  Last-touch: 10-20%
+  (Our model uses position-independent attribution based on engagement)
+
+
+================================================================================
+NOTES ON ACCURACY & LIMITATIONS
+================================================================================
+
+These calculations are PROJECTIONS based on:
+1. Historical industry data
+2. Engagement patterns
+3. Statistical models
+
+They should be used for:
+✓ Strategic planning
+✓ Resource allocation
+✓ Trend analysis
+✓ Performance comparison
+
+They should NOT be used for:
+✗ Exact revenue guarantees
+✗ Individual account predictions
+✗ Legal/contractual commitments
+
+Actual results will vary based on:
+- Market conditions
+- Competition
+- Product quality
+- Sales execution
+- Economic factors
+- Customer budgets
+
+Always validate projections against actual results and adjust your models
+accordingly. This is a FRAMEWORK, not a crystal ball.
+
+
+================================================================================
+END OF CALCULATIONS GUIDE
+================================================================================
+
+For questions or clarifications, refer to the code in:
+  - src/utils/cohortCalculations.ts
+  - src/store/simulatorStore.ts
+  - src/components/SimulatorWorkbench.tsx
+
+Last Updated: 2025
+Version: 1.0
+

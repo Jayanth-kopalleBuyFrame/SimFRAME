@@ -208,10 +208,10 @@ export default function CohortDataVisualization({
       <div className="space-y-6">
         <div className="text-center">
           <h3 className="text-xl font-bold text-slate-800 mb-2">
-            Revenue Distribution - {selectedYears[selectedYears.length - 1]}
+            Forecasted Revenue Distribution - {selectedYears[selectedYears.length - 1]}
           </h3>
           <p className="text-sm text-slate-600">
-            Total Revenue: ${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            Total Forecasted Revenue: ${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </p>
         </div>
         
@@ -416,7 +416,7 @@ export default function CohortDataVisualization({
       <div className="space-y-6">
         <div className="text-center">
           <h3 className="text-xl font-bold text-slate-800 mb-2">
-            Revenue by Cohort - {selectedYears[selectedYears.length - 1]}
+            Forecasted Revenue by Cohort - {selectedYears[selectedYears.length - 1]}
           </h3>
           <p className="text-sm text-slate-600">Forecasted Revenue Comparison Across Engagement Levels</p>
         </div>
@@ -941,7 +941,7 @@ export default function CohortDataVisualization({
     });
 
     // Define metrics for X-axis
-    const metricNames = ['Accounts', 'Win Rate', 'Avg Deal Size', 'Sales Cycle', 'Revenue'];
+    const metricNames = ['Accounts', 'Win Rate', 'Avg Deal Size', 'Sales Cycle', 'Forecasted Revenue'];
     
     // Extract values for each cohort
     const cohortLines = sortedData.map((cohort, index) => ({
@@ -1197,7 +1197,7 @@ export default function CohortDataVisualization({
                   <span className="font-semibold text-amber-600">{cohort.salesCycle.toFixed(0)} days</span>
                 </div>
                 <div className="flex justify-between border-t pt-2 mt-2">
-                  <span className="text-slate-600">Total Revenue:</span>
+                  <span className="text-slate-600">Forecasted Revenue:</span>
                   <span className="font-semibold text-cyan-600">${(cohort.forecastedMarketingRevenueAttribution / 1000).toFixed(0)}K</span>
                 </div>
               </div>

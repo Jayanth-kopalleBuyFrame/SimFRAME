@@ -446,7 +446,7 @@ export default function CohortAnalysis() {
                   </tr>
                   {yearIndex > 0 && (
                     <tr className="cohort-table-row">
-                      <td className="cohort-table-cell-bold">YoY Revenue Delta</td>
+                      <td className="cohort-table-cell-bold">YoY Forecasted Revenue Delta</td>
                       {[...yearData].sort((a, b) => {
                         const order = { 2: 0, 3: 1, 1: 2 };
                         return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];
@@ -573,7 +573,7 @@ export default function CohortAnalysis() {
                     ))}
                   </tr>
                   <tr className="delta-table-row">
-                    <td className="delta-table-metric-cell">Revenue Δ</td>
+                    <td className="delta-table-metric-cell">Forecasted Revenue Δ</td>
                     {[...deltaMetrics].sort((a: any, b: any) => {
                       const order = { 2: 0, 3: 1, 1: 2 };
                       return order[a.cohort as 1 | 2 | 3] - order[b.cohort as 1 | 2 | 3];

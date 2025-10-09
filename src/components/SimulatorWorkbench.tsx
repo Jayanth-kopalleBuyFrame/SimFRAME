@@ -6,10 +6,6 @@ import {
   calculateCompleteScore,
   calculateCompleteCurrentScore,
   generateRandomCurrentScore,
-  calculateSimulationTotalDays,
-  calculateAccountTotalDays,
-  calculateSimulationTotalNumberOfOpportunities,
-  calculateAccountTotalNumberOfOpportunitiesField
 } from '../utils/cohortCalculations';
 import AccountBulkImport from './AccountBulkImport';
 
@@ -611,7 +607,7 @@ export default function SimulatorWorkbench() {
         )}
 
         {/* This is Jayanth's change - Account Details Section */}
-        {activeAccount && (
+        {/* {activeAccount && (
           <div className="card shadow-md overflow-hidden section-spacing">
             <div className="tab-header">
               <h2 className="text-2xl font-bold text-white">
@@ -621,22 +617,22 @@ export default function SimulatorWorkbench() {
 
             <div className="p-6 space-y-6">
               {/* Column Headers */}
-              <div className="grid grid-cols-4 gap-4 pb-4 border-b-2 border-slate-300">
+              {/* <div className="grid grid-cols-4 gap-4 pb-4 border-b-2 border-slate-300">
                 <div className="font-semibold text-slate-700">Opportunity Status</div>
                 <div className="font-semibold text-slate-700">Revenue Type</div>
                 <div className="font-semibold text-slate-700">Days Between Created and Go Live</div>
                 <div className="font-semibold text-slate-700">Number of Opportunities</div>
-              </div>
+              </div> */}
 
               {/* Simulations */}
-              {activeAccount.simulations.map((sim, simIndex) => (
+              {/* {activeAccount.simulations.map((sim, simIndex) => (
                 <div key={sim.simulationId} className="space-y-4">
                   <div className="flex items-center gap-2 text-primary-600 font-semibold text-lg">
                     <span>{sim.simulationName} details under this account</span>
-                  </div>
+                  </div> */}
 
                   {/* Opportunities for this simulation */}
-                  {sim.opportunities && sim.opportunities.length > 0 ? (
+                  {/* {sim.opportunities && sim.opportunities.length > 0 ? (
                     <div className="space-y-2 ml-4">
                       {sim.opportunities.map((opp, oppIndex) => (
                         <div key={oppIndex} className="grid grid-cols-4 gap-4 py-3 hover:bg-slate-50 rounded-lg transition-colors">
@@ -653,10 +649,10 @@ export default function SimulatorWorkbench() {
                             {opp.numberOfOpportunities}
                           </div>
                         </div>
-                      ))}
+                      ))} */}
                       
                       {/* This is Jayanth's change - Simulation Total */}
-                      <div className="grid grid-cols-4 gap-4 py-3 border-t-2 border-slate-300 mt-2">
+                      {/* <div className="grid grid-cols-4 gap-4 py-3 border-t-2 border-slate-300 mt-2">
                         <div className="col-span-2 px-3 py-2 font-bold text-slate-800">
                           Total for {sim.simulationName}
                         </div>
@@ -670,17 +666,17 @@ export default function SimulatorWorkbench() {
                     </div>
                   ) : (
                     <div className="ml-4 text-sm text-slate-500 italic">No opportunities for this simulation</div>
-                  )}
+                  )} */}
 
                   {/* Divider between simulations */}
-                  {simIndex < activeAccount.simulations.length - 1 && (
+                  {/* {simIndex < activeAccount.simulations.length - 1 && (
                     <div className="border-t border-slate-200 mt-6"></div>
                   )}
                 </div>
-              ))}
+              ))} */}
 
               {/* This is Jayanth's change - Grand Total Row */}
-              <div className="grid grid-cols-4 gap-4 py-4 border-t-4 border-slate-400 mt-6">
+              {/* <div className="grid grid-cols-4 gap-4 py-4 border-t-4 border-slate-400 mt-6">
                 <div className="col-span-2 px-3 py-2 font-bold text-slate-800 text-lg">
                   Grand Total for {activeAccount.name}
                 </div>
@@ -693,7 +689,7 @@ export default function SimulatorWorkbench() {
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
         {!activeSimulation && !displayedSimulation && (
           <div className="card-padded text-center">

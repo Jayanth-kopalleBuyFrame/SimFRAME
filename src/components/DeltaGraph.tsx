@@ -102,7 +102,7 @@ export default function DeltaGraph({ deltaMetrics, fromYear, toYear }: DeltaGrap
       <div className="card-padded mb-6">
         <h3 className="card-title flex-start gap-2">
           <DollarSign className="w-5 h-5 text-green-600" />
-          Revenue Delta by Cohort
+          Forecasted Revenue Delta by Cohort
         </h3>
         
         <div className="space-y-4">
@@ -229,7 +229,7 @@ export default function DeltaGraph({ deltaMetrics, fromYear, toYear }: DeltaGrap
           <strong className="text-primary-600">Summary:</strong>{' '}
           {deltaMetrics.reduce((sum, d) => sum + d.revenueDelta, 0) >= 0 ? (
             <>
-              Overall revenue increased by{' '}
+              Overall forecasted revenue increased by{' '}
               <span className="font-bold text-green-600">
                 +${(deltaMetrics.reduce((sum, d) => sum + d.revenueDelta, 0) / 1000).toFixed(0)}K
               </span>{' '}
@@ -241,7 +241,7 @@ export default function DeltaGraph({ deltaMetrics, fromYear, toYear }: DeltaGrap
             </>
           ) : (
             <>
-              Overall revenue decreased by{' '}
+              Overall forecasted revenue decreased by{' '}
               <span className="font-bold text-red-600">
                 ${Math.abs(deltaMetrics.reduce((sum, d) => sum + d.revenueDelta, 0) / 1000).toFixed(0)}K
               </span>

@@ -601,7 +601,7 @@ export const useSimulatorStore = create<SimulatorState>()(
       account.simulations.forEach((sim) => {
         combined.push({
           id: `account-${account.id}-${sim.simulationId}`,
-          displayName: `${sim.simulationName} (Account: ${account.name})`,
+          displayName: `${sim.simulationName}`,
           type: 'account',
           accountName: account.name,
           accountId: account.id,

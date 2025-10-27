@@ -4,6 +4,7 @@ import { useSimulatorStore } from '../store/simulatorStore';
 import { Plus, Trash2, Save, ChevronDown, TrendingUp } from 'lucide-react';
 import { 
   calculateCompleteScore,
+  calculateCompleteCurrentScore,
   generateRandomCurrentScore,
 } from '../utils/cohortCalculations';
 import AccountBulkImport from './AccountBulkImport';
@@ -31,6 +32,7 @@ export default function SimulatorWorkbench() {
     activeUploadId,
     setActiveUpload,
     deleteUpload,
+    clearMarketingMetrics,
   } = useSimulatorStore();
 
   const [newSimulationName, setNewSimulationName] = useState('');
@@ -224,12 +226,15 @@ export default function SimulatorWorkbench() {
     );
 
     if (confirmation) {
+      // Clear marketing metrics when committing accounts
+      clearMarketingMetrics();
+      
       const result = commitAccountsToCohorts();
       alert(
-        `Successfully committed to cohorts!\n\n` +
-        `Low Engagement (0-1000): ${result.cohort2Count} simulations\n` +
-        `Medium Engagement (1001-3000): ${result.cohort3Count} simulations\n` +
-        `High Engagement (3000+): ${result.cohort1Count} simulations\n\n` +
+        `Successfully committed ${accountCount} account(s) to cohorts!\n\n` +
+        `Low Engagement (0-1000): ${result.cohort2Count} accounts\n` +
+        `Medium Engagement (1001-3000): ${result.cohort3Count} accounts\n` +
+        `High Engagement (3000+): ${result.cohort1Count} accounts\n\n` +
         `View results in the Cohort Analysis tab.`
       );
       
@@ -525,8 +530,10 @@ export default function SimulatorWorkbench() {
                   <tr>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Action</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Events</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Baseline Score per Event</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Baseline Score</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Proposed Score per Event</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Proposed Score</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Complete Proposed Score</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-slate-700">Actions</th>
                   </tr>
                 </thead>
@@ -564,6 +571,16 @@ export default function SimulatorWorkbench() {
                             min="0"
                             className="w-24 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           />
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="w-24 px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-slate-700 font-medium">
+                            {action.currentScore}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="w-24 px-3 py-2 bg-blue-50 border border-blue-300 rounded-lg text-slate-700 font-medium">
+                            {calculateCompleteCurrentScore(action.events, action.currentScore).toFixed(0)}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <input

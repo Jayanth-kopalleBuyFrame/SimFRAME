@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Upload, TrendingUp, Eye, EyeOff, BarChart3 } from 'lucide-react';
+import { Upload, TrendingUp, ChevronDown, ChevronRight, BarChart3 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useSimulatorStore, type MarketingMetrics } from '../store/simulatorStore';
 import CohortDataVisualization from './CohortDataVisualization';
@@ -25,11 +25,21 @@ interface CohortMetrics {
 export default function MarketingMetricsUpload() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setMarketingMetrics, marketingMetrics } = useSimulatorStore();
-  const [showCohortFlow, setShowCohortFlow] = useState(false);
   const [showVisualization, setShowVisualization] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const toggleSection = (section: string) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(section)) {
+      newExpanded.delete(section);
+    } else {
+      newExpanded.add(section);
+    }
+    setExpandedSections(newExpanded);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,18 +151,73 @@ export default function MarketingMetricsUpload() {
   const cohortDataByYear = transformToCohortMetrics();
   const cohortDataWithDeltas = cohortDataByYear; // No year-over-year for single year
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
   const formatNumber = (value: number) => {
     return Math.round(value).toLocaleString();
   };
+
+  const formatPercentage = (value: number) => {
+    // Value is already a decimal (e.g., 0.0996 for 9.96%)
+    return `${(value * 100).toFixed(2)}%`;
+  };
+
+  const calculateDelta = (me: number, nme: number, isPercentage: boolean = false) => {
+    const delta = me - nme;
+    if (isPercentage) {
+      return `${(delta * 100).toFixed(2)} pp`; // percentage points
+    }
+    return delta > 0 ? `+${formatNumber(delta)}` : formatNumber(delta);
+  };
+
+  const MetricRow = ({ label, me, nme, isChild = false, isPercentage = false, lowerIsBetter = false }: { 
+    label: string; 
+    me: number; 
+    nme: number; 
+    isChild?: boolean; 
+    isPercentage?: boolean;
+    lowerIsBetter?: boolean;
+  }) => {
+    const delta = me - nme;
+    const isPositive = lowerIsBetter ? delta < 0 : delta > 0;
+    const isNegative = lowerIsBetter ? delta > 0 : delta < 0;
+    
+    return (
+      <div className={`grid grid-cols-4 gap-4 py-3 border-b border-slate-200 hover:bg-slate-50 ${isChild ? 'pl-8' : ''}`}>
+        <div className="font-medium text-slate-800">{label}</div>
+        <div className="text-center text-slate-700">
+          {isPercentage ? formatPercentage(me) : formatNumber(me)}
+        </div>
+        <div className="text-center text-slate-700">
+          {isPercentage ? formatPercentage(nme) : formatNumber(nme)}
+        </div>
+        <div className={`text-center font-semibold ${isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-slate-600'}`}>
+          {calculateDelta(me, nme, isPercentage)}
+        </div>
+      </div>
+    );
+  };
+
+  const ExpandableSection = ({ title, isExpanded, onToggle, children }: { 
+    title: string; 
+    isExpanded: boolean; 
+    onToggle: () => void; 
+    children: React.ReactNode;
+  }) => (
+    <>
+      <div 
+        className="grid grid-cols-4 gap-4 py-3 border-b-2 border-slate-300 bg-slate-100 hover:bg-slate-200 cursor-pointer"
+        onClick={onToggle}
+      >
+        <div className="font-bold text-slate-900 flex items-center gap-2">
+          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          {title}
+        </div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+      {isExpanded && children}
+    </>
+  );
 
   return (
     <div>
@@ -183,27 +248,10 @@ export default function MarketingMetricsUpload() {
       </div>
 
       {/* Display Metrics */}
-      {marketingMetrics && cohortDataByYear.length > 0 && (
+      {marketingMetrics && (
         <>
-          {/* Cohort Flow Visualization & Data Visualization - Toggle Buttons */}
+          {/* Data Visualization Button */}
           <div className="section-spacing flex justify-end gap-4 mb-4">
-            <button
-              onClick={() => setShowCohortFlow(!showCohortFlow)}
-              className="flex-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-md"
-            >
-              {showCohortFlow ? (
-                <>
-                  <EyeOff className="w-5 h-5" />
-                  Hide Cohort Flow
-                </>
-              ) : (
-                <>
-                  <Eye className="w-5 h-5" />
-                  Show Cohort Flow
-                </>
-              )}
-            </button>
-
             <button
               onClick={() => setShowVisualization(true)}
               className="flex-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md"
@@ -213,138 +261,185 @@ export default function MarketingMetricsUpload() {
             </button>
           </div>
 
-          {/* Cohort Flow Visualization */}
-          {showCohortFlow && (
-            <div className="card shadow-md overflow-hidden section-spacing">
-              <div className="cohort-section-header">
-                <h2 className="cohort-section-title">Marketing Engagement Cohort Flow</h2>
-              </div>
-              <div className="p-6">
-                <div className="overflow-x-auto">
-                  <div className="flex gap-16 min-w-max pb-4 justify-center">
-                    {cohortDataByYear.map((yearData, yearIndex) => (
-                      <div key={yearIndex} className="flex flex-col items-center gap-8">
-                        <div className="cohort-flow-year-label">FY 24-25</div>
-                        
-                        {yearData.map((cohort) => (
-                          <div key={cohort.cohort} className="relative flex flex-col items-center gap-3">
-                            {/* Circle */}
-                            <div className="cohort-circle">
-                              <div className="cohort-circle-label">#Accounts</div>
-                              <div className="cohort-circle-count">{cohort.accounts}</div>
-                              <div className="cohort-circle-subtitle">
-                                {cohort.cohort === 1 ? 'Marketing-Engaged' : 'Non-Marketing Engaged'}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          {/* Hierarchical Metrics Table */}
+          <div className="card shadow-md overflow-hidden section-spacing">
+            <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-primary-50 to-blue-50">
+              <h2 className="text-2xl font-bold text-slate-800 mb-2">Marketing Engagement Analysis</h2>
+              <p className="text-sm text-slate-600">File: {marketingMetrics.fileName}</p>
             </div>
-          )}
 
-          {/* Metrics Table */}
-          {cohortDataWithDeltas.map((yearData, yearIndex) => (
-            <div key={yearIndex} className="card shadow-md overflow-hidden section-spacing">
-              <div className="cohort-section-header">
-                <div className="flex-between">
-                  <h2 className="cohort-section-title">
-                    FY 24-25 - Marketing Engagement Metrics
-                  </h2>
-                  <span className="cohort-section-badge">
-                    ✓ Uploaded Data
-                  </span>
-                </div>
+            <div className="overflow-x-auto">
+              {/* Header */}
+              <div className="grid grid-cols-4 gap-4 py-4 px-6 bg-slate-50 border-b-2 border-slate-300">
+                <div className="font-bold text-slate-900">Metric</div>
+                <div className="font-bold text-slate-900 text-center">Marketing-Engaged</div>
+                <div className="font-bold text-slate-900 text-center">Non-Marketing Engaged</div>
+                <div className="font-bold text-slate-900 text-center">Delta</div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="cohort-table">
-                  <thead className="cohort-table-header">
-                    <tr>
-                      <th className="cohort-table-header-cell">Metric</th>
-                      {yearData.map((cohort) => (
-                        <th key={cohort.cohort} className="cohort-table-header-cell-center">
-                          <div className="flex-center gap-2">
-                            <div className="cohort-indicator"></div>
-                            <span>{cohort.cohort === 1 ? 'Marketing-Engaged' : 'Non-Marketing Engaged'}</span>
-                          </div>
-                        </th>
-                      ))}
-                      <th className="cohort-table-header-cell-center">Delta</th>
-                    </tr>
-                  </thead>
-                  <tbody className="cohort-table-body">
-                    <tr className="cohort-table-row">
-                      <td className="cohort-table-cell-bold">Accounts</td>
-                      {yearData.map((cohort) => (
-                        <td key={cohort.cohort} className="cohort-table-cell-center">{cohort.accounts}</td>
-                      ))}
-                      <td className="cohort-table-cell-center">
-                        <div className="cohort-delta cohort-delta-neutral">
-                          {yearData[0].accounts - yearData[1].accounts}
-                        </div>
-                      </td>
-                    </tr>
-                    <tr className="cohort-table-row">
-                      <td className="cohort-table-cell-bold">Win Rate</td>
-                      {yearData.map((cohort) => (
-                        <td key={cohort.cohort} className="cohort-table-cell-center">{cohort.winRate.toFixed(1)}%</td>
-                      ))}
-                      <td className="cohort-table-cell-center">
-                        <div className={`cohort-delta ${yearData[0].winRate - yearData[1].winRate > 0 ? 'cohort-delta-positive' : 'cohort-delta-negative'}`}>
-                          <TrendingUp className={`w-3 h-3 ${yearData[0].winRate - yearData[1].winRate < 0 ? 'rotate-180' : ''}`} />
-                          {(yearData[0].winRate - yearData[1].winRate).toFixed(1)}%
-                        </div>
-                      </td>
-                    </tr>
-                    <tr className="cohort-table-row">
-                      <td className="cohort-table-cell-bold">Avg Deal Size</td>
-                      {yearData.map((cohort) => (
-                        <td key={cohort.cohort} className="cohort-table-cell-center">
-                          {formatCurrency(cohort.avgDealSize)}
-                        </td>
-                      ))}
-                      <td className="cohort-table-cell-center">
-                        <div className={`cohort-delta ${yearData[0].avgDealSize - yearData[1].avgDealSize > 0 ? 'cohort-delta-positive' : 'cohort-delta-negative'}`}>
-                          <TrendingUp className={`w-3 h-3 ${yearData[0].avgDealSize - yearData[1].avgDealSize < 0 ? 'rotate-180' : ''}`} />
-                          {formatCurrency(Math.abs(yearData[0].avgDealSize - yearData[1].avgDealSize))}
-                        </div>
-                      </td>
-                    </tr>
-                    <tr className="cohort-table-row">
-                      <td className="cohort-table-cell-bold">Sales Cycle (days)</td>
-                      {yearData.map((cohort) => (
-                        <td key={cohort.cohort} className="cohort-table-cell-center">{formatNumber(cohort.salesCycle)}</td>
-                      ))}
-                      <td className="cohort-table-cell-center">
-                        <div className={`cohort-delta ${yearData[0].salesCycle - yearData[1].salesCycle < 0 ? 'cohort-delta-positive' : 'cohort-delta-negative'}`}>
-                          <TrendingUp className={`w-3 h-3 ${yearData[0].salesCycle - yearData[1].salesCycle > 0 ? 'rotate-180' : ''}`} />
-                          {formatNumber(Math.abs(yearData[0].salesCycle - yearData[1].salesCycle))}
-                        </div>
-                      </td>
-                    </tr>
-                    <tr className="cohort-table-row">
-                      <td className="cohort-table-cell-bold">Forecasted Marketing Revenue Attribution</td>
-                      {yearData.map((cohort) => (
-                        <td key={cohort.cohort} className="cohort-table-cell-center">
-                          {formatCurrency(cohort.forecastedMarketingRevenueAttribution)}
-                        </td>
-                      ))}
-                      <td className="cohort-table-cell-center">
-                        <div className={`cohort-delta ${yearData[0].forecastedMarketingRevenueAttribution - yearData[1].forecastedMarketingRevenueAttribution > 0 ? 'cohort-delta-positive' : 'cohort-delta-negative'}`}>
-                          <TrendingUp className={`w-3 h-3 ${yearData[0].forecastedMarketingRevenueAttribution - yearData[1].forecastedMarketingRevenueAttribution < 0 ? 'rotate-180' : ''}`} />
-                          {formatCurrency(Math.abs(yearData[0].forecastedMarketingRevenueAttribution - yearData[1].forecastedMarketingRevenueAttribution))}
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div className="px-6">
+                {/* Number of Accounts */}
+                <MetricRow 
+                  label="Number of Accounts" 
+                  me={marketingMetrics.metrics.numberOfAccounts.marketingEngaged} 
+                  nme={marketingMetrics.metrics.numberOfAccounts.nonMarketingEngaged} 
+                />
+                
+                {/* Number of Opportunities - Expandable */}
+                <ExpandableSection 
+                  title="Number of Opportunities" 
+                  isExpanded={expandedSections.has('opportunities')} 
+                  onToggle={() => toggleSection('opportunities')}
+                >
+                  <MetricRow 
+                    label="Total Opportunities" 
+                    me={marketingMetrics.metrics.numberOfOpportunities.marketingEngaged} 
+                    nme={marketingMetrics.metrics.numberOfOpportunities.nonMarketingEngaged} 
+                    isChild 
+                  />
+                  <MetricRow 
+                    label="Open" 
+                    me={marketingMetrics.metrics.open.marketingEngaged} 
+                    nme={marketingMetrics.metrics.open.nonMarketingEngaged} 
+                    isChild 
+                  />
+                  <MetricRow 
+                    label="Closed Won" 
+                    me={marketingMetrics.metrics.closedWon.marketingEngaged} 
+                    nme={marketingMetrics.metrics.closedWon.nonMarketingEngaged} 
+                    isChild 
+                  />
+                  <MetricRow 
+                    label="Closed Lost" 
+                    me={marketingMetrics.metrics.closedLost.marketingEngaged} 
+                    nme={marketingMetrics.metrics.closedLost.nonMarketingEngaged} 
+                    isChild 
+                  />
+                </ExpandableSection>
+
+                {/* Win Rate - Expandable */}
+                <ExpandableSection 
+                  title="Win Rate" 
+                  isExpanded={expandedSections.has('winrate')} 
+                  onToggle={() => toggleSection('winrate')}
+                >
+                  <MetricRow 
+                    label="Overall Win Rate" 
+                    me={marketingMetrics.metrics.winRate.marketingEngaged} 
+                    nme={marketingMetrics.metrics.winRate.nonMarketingEngaged} 
+                    isChild 
+                    isPercentage
+                  />
+                  
+                  {/* New Business Sub-section */}
+                  <MetricRow 
+                    label="New Business Win Rate" 
+                    me={marketingMetrics.metrics.newBusiness.marketingEngaged} 
+                    nme={marketingMetrics.metrics.newBusiness.nonMarketingEngaged} 
+                    isChild 
+                    isPercentage
+                  />
+                  <MetricRow 
+                    label="New Business: Closed Won" 
+                    me={marketingMetrics.metrics.newBusinessClosedWon.marketingEngaged} 
+                    nme={marketingMetrics.metrics.newBusinessClosedWon.nonMarketingEngaged} 
+                    isChild 
+                  />
+                  <MetricRow 
+                    label="New Business: Closed Lost" 
+                    me={marketingMetrics.metrics.newBusinessClosedLost.marketingEngaged} 
+                    nme={marketingMetrics.metrics.newBusinessClosedLost.nonMarketingEngaged} 
+                    isChild 
+                  />
+                  
+                  {/* Channel Sales Sub-section */}
+                  <MetricRow 
+                    label="Channel Sales Win Rate" 
+                    me={marketingMetrics.metrics.channelSales.marketingEngaged} 
+                    nme={marketingMetrics.metrics.channelSales.nonMarketingEngaged} 
+                    isChild 
+                    isPercentage
+                  />
+                  <MetricRow 
+                    label="Channel: Closed Won" 
+                    me={marketingMetrics.metrics.channelClosedWon.marketingEngaged} 
+                    nme={marketingMetrics.metrics.channelClosedWon.nonMarketingEngaged} 
+                    isChild 
+                  />
+                  <MetricRow 
+                    label="Channel: Closed Lost" 
+                    me={marketingMetrics.metrics.channelClosedLost.marketingEngaged} 
+                    nme={marketingMetrics.metrics.channelClosedLost.nonMarketingEngaged} 
+                    isChild 
+                  />
+                  
+                  {/* Network Sub-section */}
+                  <MetricRow 
+                    label="Network Win Rate" 
+                    me={marketingMetrics.metrics.network.marketingEngaged} 
+                    nme={marketingMetrics.metrics.network.nonMarketingEngaged} 
+                    isChild 
+                    isPercentage
+                  />
+                  <MetricRow 
+                    label="Network: Closed Won" 
+                    me={marketingMetrics.metrics.networkClosedWon.marketingEngaged} 
+                    nme={marketingMetrics.metrics.networkClosedWon.nonMarketingEngaged} 
+                    isChild 
+                  />
+                  <MetricRow 
+                    label="Network: Closed Lost" 
+                    me={marketingMetrics.metrics.networkClosedLost.marketingEngaged} 
+                    nme={marketingMetrics.metrics.networkClosedLost.nonMarketingEngaged} 
+                    isChild 
+                  />
+                </ExpandableSection>
+
+                {/* Pipeline Velocity - Expandable */}
+                <ExpandableSection 
+                  title="Average Pipeline Velocity (days)" 
+                  isExpanded={expandedSections.has('velocity')} 
+                  onToggle={() => toggleSection('velocity')}
+                >
+                  <MetricRow 
+                    label="1. Qualification" 
+                    me={marketingMetrics.metrics.pipelineVelocityQualification.marketingEngaged} 
+                    nme={marketingMetrics.metrics.pipelineVelocityQualification.nonMarketingEngaged} 
+                    isChild 
+                    lowerIsBetter
+                  />
+                  <MetricRow 
+                    label="2. Commercial Discussions" 
+                    me={marketingMetrics.metrics.pipelineVelocityCommercialDiscussions.marketingEngaged} 
+                    nme={marketingMetrics.metrics.pipelineVelocityCommercialDiscussions.nonMarketingEngaged} 
+                    isChild 
+                    lowerIsBetter
+                  />
+                  <MetricRow 
+                    label="3. Onboarding Initiated" 
+                    me={marketingMetrics.metrics.pipelineVelocityOnboardingInitiated.marketingEngaged} 
+                    nme={marketingMetrics.metrics.pipelineVelocityOnboardingInitiated.nonMarketingEngaged} 
+                    isChild 
+                    lowerIsBetter
+                  />
+                  <MetricRow 
+                    label="4. Contract Signed" 
+                    me={marketingMetrics.metrics.pipelineVelocityContractSigned.marketingEngaged} 
+                    nme={marketingMetrics.metrics.pipelineVelocityContractSigned.nonMarketingEngaged} 
+                    isChild 
+                    lowerIsBetter
+                  />
+                  <MetricRow 
+                    label="Closed Live" 
+                    me={marketingMetrics.metrics.pipelineVelocityClosedLive.marketingEngaged} 
+                    nme={marketingMetrics.metrics.pipelineVelocityClosedLive.nonMarketingEngaged} 
+                    isChild 
+                    lowerIsBetter
+                  />
+                </ExpandableSection>
               </div>
             </div>
-          ))}
+          </div>
 
           {/* Data Visualization Modal */}
           <CohortDataVisualization
@@ -353,6 +448,7 @@ export default function MarketingMetricsUpload() {
             cohortDataByYear={cohortDataByYear as any}
             deltaMetrics={null}
             selectedYears={['FY 24-25']}
+            isMarketingMetrics={true}
           />
         </>
       )}

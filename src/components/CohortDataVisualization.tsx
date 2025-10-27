@@ -30,6 +30,7 @@ interface CohortDataVisualizationProps {
   cohortDataByYear: CohortMetrics[][];
   deltaMetrics: (DeltaMetric | null)[] | null;
   selectedYears: string[];
+  isMarketingMetrics?: boolean; // Flag to indicate marketing metrics mode
 }
 
 type GraphType = 'accounts-pie' | 'revenue-pie' | 'accounts-bar' | 'revenue-bar' | 'winrate-bar' | 'dealsize-bar' | 'salescycle-bar' | 'cohort-comparison';
@@ -42,12 +43,18 @@ export default function CohortDataVisualization({
   cohortDataByYear,
   deltaMetrics: _deltaMetrics,
   selectedYears,
+  isMarketingMetrics = false,
 }: CohortDataVisualizationProps) {
   const [selectedGraph, setSelectedGraph] = useState<GraphType>('cohort-comparison');
 
   if (!isOpen) return null;
 
   const getCohortLabel = (cohort: number) => {
+    if (isMarketingMetrics) {
+      // Use marketing-specific labels
+      return cohort === 1 ? 'Marketing-Engaged' : cohort === 2 ? 'Non-Marketing Engaged' : 'Other';
+    }
+    // Use engagement-based labels
     return cohort === 1 ? 'High Engagement' : cohort === 2 ? 'Low Engagement' : 'Medium Engagement';
   };
 

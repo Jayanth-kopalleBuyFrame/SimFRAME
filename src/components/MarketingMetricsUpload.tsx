@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Upload, TrendingUp, ChevronDown, ChevronRight, BarChart3 } from 'lucide-react';
+import { Upload, ChevronDown, ChevronRight, BarChart3 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useSimulatorStore, type MarketingMetrics } from '../store/simulatorStore';
 import CohortDataVisualization from './CohortDataVisualization';
@@ -149,7 +149,6 @@ export default function MarketingMetricsUpload() {
   };
 
   const cohortDataByYear = transformToCohortMetrics();
-  const cohortDataWithDeltas = cohortDataByYear; // No year-over-year for single year
 
   const formatNumber = (value: number) => {
     return Math.round(value).toLocaleString();

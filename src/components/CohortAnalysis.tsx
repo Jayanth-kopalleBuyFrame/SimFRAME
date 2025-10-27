@@ -9,11 +9,12 @@ import {
 import { TrendingUp, AlertCircle, Award, Eye, EyeOff, BarChart3 } from 'lucide-react';
 import CohortAnalysisPDFExport from './CohortAnalysisPDFExport';
 import CohortDataVisualization from './CohortDataVisualization';
+import MarketingMetricsUpload from './MarketingMetricsUpload';
 
 // All cohorts now use the same dark navy blue color
 
 export default function CohortAnalysis() {
-  const { cohortFilters, setCohortFilters, committedCohortData } = useSimulatorStore();
+  const { cohortFilters, setCohortFilters, committedCohortData, marketingMetrics } = useSimulatorStore();
   const availableYears = ['FY 24-25', 'FY 25-26', 'FY 26-27', 'FY 27-28'];
   const [showCohortFlow, setShowCohortFlow] = useState(false);
   const [showVisualization, setShowVisualization] = useState(false);
@@ -104,8 +105,14 @@ export default function CohortAnalysis() {
           </div>
         </div>
 
-        {/* Committed Data Banner */}
-        {committedCohortData && (
+        {/* Marketing Metrics Upload Section */}
+        <MarketingMetricsUpload />
+
+        {/* Show committed cohorts section only if marketing metrics NOT uploaded */}
+        {!marketingMetrics && (
+          <>
+            {/* Committed Data Banner */}
+            {committedCohortData && (
           <div className="notification-success">
             <div className="flex-start gap-4">
               <div className="flex-shrink-0">
@@ -612,6 +619,8 @@ export default function CohortAnalysis() {
             <h3 className="text-xl font-semibold text-slate-600 mb-2">No Years Selected</h3>
             <p className="page-subtitle">Select years from the filters above to view cohort analysis</p>
           </div>
+        )}
+          </>
         )}
 
         {/* Data Visualization Modal */}

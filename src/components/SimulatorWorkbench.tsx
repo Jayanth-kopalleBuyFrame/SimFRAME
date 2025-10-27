@@ -108,7 +108,23 @@ export default function SimulatorWorkbench() {
 
   const handleCreateSimulation = () => {
     if (newSimulationName.trim()) {
-      createSimulation(newSimulationName.trim());
+      const newSimId = createSimulation(newSimulationName.trim());
+      
+      // If there are uploaded accounts, populate the new simulation with an example from the first account
+      if (filteredAccounts.length > 0) {
+        const firstAccount = filteredAccounts[0];
+        if (firstAccount.simulations.length > 0) {
+          const exampleActions = firstAccount.simulations[0].actions.map(action => ({
+            ...action,
+            id: `action-${Math.random().toString(36).substr(2, 9)}`, // Generate new IDs
+            events: 0, // Reset events to 0 for the new simulation
+          }));
+          
+          // Update the new simulation with example actions
+          updateSimulation(newSimId, { actions: exampleActions });
+        }
+      }
+      
       setNewSimulationName('');
       setShowNewSimulation(false);
     }
@@ -434,7 +450,8 @@ export default function SimulatorWorkbench() {
             </div>
 
             {/* This is Jayanth's change - Opportunity Data Inputs for Manual Simulations */}
-            {activeSimulation && !displayedSimulation && (
+            {/* Only show opportunity details if there are NO uploaded accounts (pure manual simulation) */}
+            {activeSimulation && !displayedSimulation && filteredAccounts.length === 0 && (
               <div className="p-6 border-b border-slate-200 bg-slate-50">
                 <h3 className="text-lg font-semibold text-slate-800 mb-4">Opportunity Information</h3>
                 <div className="grid grid-cols-4 gap-4">
@@ -509,8 +526,6 @@ export default function SimulatorWorkbench() {
                   <tr>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Action</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Events</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Current Score</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Complete Current Score</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Proposed Score</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Complete Proposed Score</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-slate-700">Actions</th>
@@ -550,16 +565,6 @@ export default function SimulatorWorkbench() {
                             min="0"
                             className="w-24 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           />
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="w-24 px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-slate-700 font-medium">
-                            {action.currentScore}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="w-24 px-3 py-2 bg-blue-50 border border-blue-300 rounded-lg text-slate-700 font-medium">
-                            {calculateCompleteCurrentScore(action.events, action.currentScore).toFixed(0)}
-                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <input

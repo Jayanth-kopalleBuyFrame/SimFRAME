@@ -99,6 +99,34 @@ export interface CombinedSimulationItem {
   simulationId?: string; // For account simulations
 }
 
+// Marketing metrics data for Cohort Analysis
+export interface MarketingMetrics {
+  uploadedAt: Date;
+  fileName: string;
+  metrics: {
+    numberOfAccounts: { marketingEngaged: number; nonMarketingEngaged: number };
+    numberOfOpportunities: { marketingEngaged: number; nonMarketingEngaged: number };
+    open: { marketingEngaged: number; nonMarketingEngaged: number };
+    closedWon: { marketingEngaged: number; nonMarketingEngaged: number };
+    closedLost: { marketingEngaged: number; nonMarketingEngaged: number };
+    winRate: { marketingEngaged: number; nonMarketingEngaged: number };
+    newBusiness: { marketingEngaged: number; nonMarketingEngaged: number };
+    newBusinessClosedWon: { marketingEngaged: number; nonMarketingEngaged: number };
+    newBusinessClosedLost: { marketingEngaged: number; nonMarketingEngaged: number };
+    channelSales: { marketingEngaged: number; nonMarketingEngaged: number };
+    channelClosedWon: { marketingEngaged: number; nonMarketingEngaged: number };
+    channelClosedLost: { marketingEngaged: number; nonMarketingEngaged: number };
+    network: { marketingEngaged: number; nonMarketingEngaged: number };
+    networkClosedWon: { marketingEngaged: number; nonMarketingEngaged: number };
+    networkClosedLost: { marketingEngaged: number; nonMarketingEngaged: number };
+    pipelineVelocityQualification: { marketingEngaged: number; nonMarketingEngaged: number };
+    pipelineVelocityCommercialDiscussions: { marketingEngaged: number; nonMarketingEngaged: number };
+    pipelineVelocityOnboardingInitiated: { marketingEngaged: number; nonMarketingEngaged: number };
+    pipelineVelocityContractSigned: { marketingEngaged: number; nonMarketingEngaged: number };
+    pipelineVelocityClosedLive: { marketingEngaged: number; nonMarketingEngaged: number };
+  };
+}
+
 // This is Jayanth's change
 interface SimulatorState {
   // Current active simulation
@@ -117,6 +145,9 @@ interface SimulatorState {
   
   // Committed cohort data for FY 25-26
   committedCohortData: CommittedCohortData | null;
+  
+  // Marketing metrics for Cohort Analysis
+  marketingMetrics: MarketingMetrics | null;
   
   // Current tab
   activeTab: 'dashboard' | 'simulator' | 'cohort-analysis';
@@ -148,6 +179,10 @@ interface SimulatorState {
   bulkCreateAccounts: (accounts: Omit<Account, 'id' | 'createdAt' | 'lastModified'>[], fileName: string) => string;
   commitAccountsToCohorts: () => CommittedCohortData;
   
+  // Marketing Metrics Actions
+  setMarketingMetrics: (metrics: MarketingMetrics) => void;
+  clearMarketingMetrics: () => void;
+  
   // Upload Actions
   setActiveUpload: (id: string | null) => void;
   deleteUpload: (id: string) => void;
@@ -176,6 +211,7 @@ export const useSimulatorStore = create<SimulatorState>()(
   uploads: new Map(),
   activeUploadId: null,
   committedCohortData: null,
+  marketingMetrics: null,
   activeTab: 'dashboard',
   cohortFilters: {
     numberOfYears: 2,
@@ -581,11 +617,16 @@ export const useSimulatorStore = create<SimulatorState>()(
     
     return committedData;
   },
+  
+  // Marketing Metrics Actions
+  setMarketingMetrics: (metrics) => set({ marketingMetrics: metrics }),
+  clearMarketingMetrics: () => set({ marketingMetrics: null }),
 
   // Get all simulations (manual + account) for dropdown
   getAllSimulations: () => {
     const state = get();
     const combined: CombinedSimulationItem[] = [];
+    const addedSimulationIds = new Set<string>();
 
     // Add manual simulations
     Array.from(state.simulations.values()).forEach((sim) => {
@@ -594,19 +635,31 @@ export const useSimulatorStore = create<SimulatorState>()(
         displayName: `[Manual] ${sim.name}`,
         type: 'manual',
       });
+      addedSimulationIds.add(sim.id);
     });
 
-    // Add account simulations
+    // Add account simulations (only if not already in manual simulations)
     Array.from(state.accounts.values()).forEach((account) => {
       account.simulations.forEach((sim) => {
-        combined.push({
-          id: `account-${account.id}-${sim.simulationId}`,
-          displayName: `${sim.simulationName}`,
-          type: 'account',
-          accountName: account.name,
-          accountId: account.id,
-          simulationId: sim.simulationId,
-        });
+        // Skip if this simulation ID is already in manual simulations
+        if (!addedSimulationIds.has(sim.simulationId)) {
+          // Check if we've already added this simulation ID from another account
+          const alreadyAdded = combined.some(item => 
+            item.type === 'account' && item.simulationId === sim.simulationId
+          );
+          
+          if (!alreadyAdded) {
+            combined.push({
+              id: `account-${account.id}-${sim.simulationId}`,
+              displayName: `${sim.simulationName}`,
+              type: 'account',
+              accountName: account.name,
+              accountId: account.id,
+              simulationId: sim.simulationId,
+            });
+            addedSimulationIds.add(sim.simulationId);
+          }
+        }
       });
     });
 
@@ -621,6 +674,7 @@ export const useSimulatorStore = create<SimulatorState>()(
         accounts: Array.from(state.accounts.entries()),
         uploads: Array.from(state.uploads.entries()),
         committedCohortData: state.committedCohortData,
+        marketingMetrics: state.marketingMetrics,
         activeSimulationId: state.activeSimulationId,
         activeAccountId: state.activeAccountId,
         activeUploadId: state.activeUploadId,

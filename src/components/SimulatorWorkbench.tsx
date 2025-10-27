@@ -4,7 +4,6 @@ import { useSimulatorStore } from '../store/simulatorStore';
 import { Plus, Trash2, Save, ChevronDown, TrendingUp } from 'lucide-react';
 import { 
   calculateCompleteScore,
-  calculateCompleteCurrentScore,
   generateRandomCurrentScore,
 } from '../utils/cohortCalculations';
 import AccountBulkImport from './AccountBulkImport';

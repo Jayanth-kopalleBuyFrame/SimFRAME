@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Upload, ChevronDown, ChevronRight, BarChart3 } from 'lucide-react';
+import { Upload, ChevronDown, ChevronRight, BarChart3, TrendingUp } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useSimulatorStore, type MarketingMetrics } from '../store/simulatorStore';
 import CohortDataVisualization from './CohortDataVisualization';
@@ -180,43 +180,87 @@ export default function MarketingMetricsUpload() {
     const isNegative = lowerIsBetter ? delta > 0 : delta < 0;
     
     return (
-      <div className={`grid grid-cols-4 gap-4 py-3 border-b border-slate-200 hover:bg-slate-50 ${isChild ? 'pl-8' : ''}`}>
-        <div className="font-medium text-slate-800">{label}</div>
-        <div className="text-center text-slate-700">
+      <tr className={`cohort-table-row ${isChild ? 'bg-slate-50' : ''}`}>
+        <td className={`cohort-table-cell-bold ${isChild ? 'pl-12' : ''}`}>{label}</td>
+        <td className="cohort-table-cell-center">
           {isPercentage ? formatPercentage(me) : formatNumber(me)}
-        </div>
-        <div className="text-center text-slate-700">
+        </td>
+        <td className="cohort-table-cell-center">
           {isPercentage ? formatPercentage(nme) : formatNumber(nme)}
-        </div>
-        <div className={`text-center font-semibold ${isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-slate-600'}`}>
-          {calculateDelta(me, nme, isPercentage)}
-        </div>
-      </div>
+        </td>
+        <td className="cohort-table-cell-center">
+          <div className={`cohort-delta ${isPositive ? 'cohort-delta-positive' : isNegative ? 'cohort-delta-negative' : 'cohort-delta-neutral'}`}>
+            {isPositive || isNegative ? (
+              <TrendingUp className={`w-3 h-3 ${isNegative ? 'rotate-180' : ''}`} />
+            ) : null}
+            {calculateDelta(me, nme, isPercentage)}
+          </div>
+        </td>
+      </tr>
     );
   };
 
-  const ExpandableSection = ({ title, isExpanded, onToggle, children }: { 
+  const ExpandableSection = ({ 
+    title, 
+    isExpanded, 
+    onToggle, 
+    me, 
+    nme, 
+    isPercentage = false,
+    lowerIsBetter = false,
+    children 
+  }: { 
     title: string; 
     isExpanded: boolean; 
-    onToggle: () => void; 
+    onToggle: () => void;
+    me?: number;
+    nme?: number;
+    isPercentage?: boolean;
+    lowerIsBetter?: boolean;
     children: React.ReactNode;
-  }) => (
-    <>
-      <div 
-        className="grid grid-cols-4 gap-4 py-3 border-b-2 border-slate-300 bg-slate-100 hover:bg-slate-200 cursor-pointer"
-        onClick={onToggle}
-      >
-        <div className="font-bold text-slate-900 flex items-center gap-2">
-          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          {title}
-        </div>
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
-      {isExpanded && children}
-    </>
-  );
+  }) => {
+    const delta = me !== undefined && nme !== undefined ? me - nme : 0;
+    const isPositive = lowerIsBetter ? delta < 0 : delta > 0;
+    const isNegative = lowerIsBetter ? delta > 0 : delta < 0;
+    
+    return (
+      <>
+        <tr className="cohort-table-row cursor-pointer" onClick={onToggle}>
+          <td className="cohort-table-cell-bold">
+            <div className="flex items-center gap-2">
+              {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              <span>{title}</span>
+            </div>
+          </td>
+          {me !== undefined && nme !== undefined ? (
+            <>
+              <td className="cohort-table-cell-center">
+                {isPercentage ? formatPercentage(me) : formatNumber(me)}
+              </td>
+              <td className="cohort-table-cell-center">
+                {isPercentage ? formatPercentage(nme) : formatNumber(nme)}
+              </td>
+              <td className="cohort-table-cell-center">
+                <div className={`cohort-delta ${isPositive ? 'cohort-delta-positive' : isNegative ? 'cohort-delta-negative' : 'cohort-delta-neutral'}`}>
+                  {isPositive || isNegative ? (
+                    <TrendingUp className={`w-3 h-3 ${isNegative ? 'rotate-180' : ''}`} />
+                  ) : null}
+                  {calculateDelta(me, nme, isPercentage)}
+                </div>
+              </td>
+            </>
+          ) : (
+            <>
+              <td className="cohort-table-cell-center"></td>
+              <td className="cohort-table-cell-center"></td>
+              <td className="cohort-table-cell-center"></td>
+            </>
+          )}
+        </tr>
+        {isExpanded && children}
+      </>
+    );
+  };
 
   return (
     <div>
@@ -262,181 +306,204 @@ export default function MarketingMetricsUpload() {
 
           {/* Hierarchical Metrics Table */}
           <div className="card shadow-md overflow-hidden section-spacing">
-            <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-primary-50 to-blue-50">
-              <h2 className="text-2xl font-bold text-slate-800 mb-2">Marketing Engagement Analysis</h2>
-              <p className="text-sm text-slate-600">File: {marketingMetrics.fileName}</p>
+            <div className="cohort-section-header">
+              <div className="flex-between">
+                <h2 className="cohort-section-title">Marketing Engagement Metrics</h2>
+                <span className="cohort-section-badge">✓ Uploaded Data</span>
+              </div>
+              <p className="text-sm text-slate-600 mt-2">File: {marketingMetrics.fileName}</p>
             </div>
 
             <div className="overflow-x-auto">
-              {/* Header */}
-              <div className="grid grid-cols-4 gap-4 py-4 px-6 bg-slate-50 border-b-2 border-slate-300">
-                <div className="font-bold text-slate-900">Metric</div>
-                <div className="font-bold text-slate-900 text-center">Marketing-Engaged</div>
-                <div className="font-bold text-slate-900 text-center">Non-Marketing Engaged</div>
-                <div className="font-bold text-slate-900 text-center">Delta</div>
-              </div>
-
-              <div className="px-6">
-                {/* Number of Accounts */}
-                <MetricRow 
-                  label="Number of Accounts" 
-                  me={marketingMetrics.metrics.numberOfAccounts.marketingEngaged} 
-                  nme={marketingMetrics.metrics.numberOfAccounts.nonMarketingEngaged} 
-                />
-                
-                {/* Number of Opportunities - Expandable */}
-                <ExpandableSection 
-                  title="Number of Opportunities" 
-                  isExpanded={expandedSections.has('opportunities')} 
-                  onToggle={() => toggleSection('opportunities')}
-                >
+              <table className="cohort-table">
+                <thead className="cohort-table-header">
+                  <tr>
+                    <th className="cohort-table-header-cell">Metric</th>
+                    <th className="cohort-table-header-cell-center">
+                      <div className="flex-center gap-2">
+                        <div className="cohort-indicator"></div>
+                        <span>Marketing-Engaged</span>
+                      </div>
+                    </th>
+                    <th className="cohort-table-header-cell-center">
+                      <div className="flex-center gap-2">
+                        <div className="cohort-indicator"></div>
+                        <span>Non-Marketing Engaged</span>
+                      </div>
+                    </th>
+                    <th className="cohort-table-header-cell-center">Delta</th>
+                  </tr>
+                </thead>
+                <tbody className="cohort-table-body">
+                  {/* Number of Accounts */}
                   <MetricRow 
-                    label="Total Opportunities" 
-                    me={marketingMetrics.metrics.numberOfOpportunities.marketingEngaged} 
-                    nme={marketingMetrics.metrics.numberOfOpportunities.nonMarketingEngaged} 
-                    isChild 
-                  />
-                  <MetricRow 
-                    label="Open" 
-                    me={marketingMetrics.metrics.open.marketingEngaged} 
-                    nme={marketingMetrics.metrics.open.nonMarketingEngaged} 
-                    isChild 
-                  />
-                  <MetricRow 
-                    label="Closed Won" 
-                    me={marketingMetrics.metrics.closedWon.marketingEngaged} 
-                    nme={marketingMetrics.metrics.closedWon.nonMarketingEngaged} 
-                    isChild 
-                  />
-                  <MetricRow 
-                    label="Closed Lost" 
-                    me={marketingMetrics.metrics.closedLost.marketingEngaged} 
-                    nme={marketingMetrics.metrics.closedLost.nonMarketingEngaged} 
-                    isChild 
-                  />
-                </ExpandableSection>
-
-                {/* Win Rate - Expandable */}
-                <ExpandableSection 
-                  title="Win Rate" 
-                  isExpanded={expandedSections.has('winrate')} 
-                  onToggle={() => toggleSection('winrate')}
-                >
-                  <MetricRow 
-                    label="Overall Win Rate" 
-                    me={marketingMetrics.metrics.winRate.marketingEngaged} 
-                    nme={marketingMetrics.metrics.winRate.nonMarketingEngaged} 
-                    isChild 
-                    isPercentage
+                    label="Number of Accounts" 
+                    me={marketingMetrics.metrics.numberOfAccounts.marketingEngaged} 
+                    nme={marketingMetrics.metrics.numberOfAccounts.nonMarketingEngaged} 
                   />
                   
-                  {/* New Business Sub-section */}
-                  <MetricRow 
-                    label="New Business Win Rate" 
-                    me={marketingMetrics.metrics.newBusiness.marketingEngaged} 
-                    nme={marketingMetrics.metrics.newBusiness.nonMarketingEngaged} 
-                    isChild 
-                    isPercentage
-                  />
-                  <MetricRow 
-                    label="New Business: Closed Won" 
-                    me={marketingMetrics.metrics.newBusinessClosedWon.marketingEngaged} 
-                    nme={marketingMetrics.metrics.newBusinessClosedWon.nonMarketingEngaged} 
-                    isChild 
-                  />
-                  <MetricRow 
-                    label="New Business: Closed Lost" 
-                    me={marketingMetrics.metrics.newBusinessClosedLost.marketingEngaged} 
-                    nme={marketingMetrics.metrics.newBusinessClosedLost.nonMarketingEngaged} 
-                    isChild 
-                  />
-                  
-                  {/* Channel Sales Sub-section */}
-                  <MetricRow 
-                    label="Channel Sales Win Rate" 
-                    me={marketingMetrics.metrics.channelSales.marketingEngaged} 
-                    nme={marketingMetrics.metrics.channelSales.nonMarketingEngaged} 
-                    isChild 
-                    isPercentage
-                  />
-                  <MetricRow 
-                    label="Channel: Closed Won" 
-                    me={marketingMetrics.metrics.channelClosedWon.marketingEngaged} 
-                    nme={marketingMetrics.metrics.channelClosedWon.nonMarketingEngaged} 
-                    isChild 
-                  />
-                  <MetricRow 
-                    label="Channel: Closed Lost" 
-                    me={marketingMetrics.metrics.channelClosedLost.marketingEngaged} 
-                    nme={marketingMetrics.metrics.channelClosedLost.nonMarketingEngaged} 
-                    isChild 
-                  />
-                  
-                  {/* Network Sub-section */}
-                  <MetricRow 
-                    label="Network Win Rate" 
-                    me={marketingMetrics.metrics.network.marketingEngaged} 
-                    nme={marketingMetrics.metrics.network.nonMarketingEngaged} 
-                    isChild 
-                    isPercentage
-                  />
-                  <MetricRow 
-                    label="Network: Closed Won" 
-                    me={marketingMetrics.metrics.networkClosedWon.marketingEngaged} 
-                    nme={marketingMetrics.metrics.networkClosedWon.nonMarketingEngaged} 
-                    isChild 
-                  />
-                  <MetricRow 
-                    label="Network: Closed Lost" 
-                    me={marketingMetrics.metrics.networkClosedLost.marketingEngaged} 
-                    nme={marketingMetrics.metrics.networkClosedLost.nonMarketingEngaged} 
-                    isChild 
-                  />
-                </ExpandableSection>
+                  {/* Number of Opportunities - Expandable */}
+                  <ExpandableSection 
+                    title="Number of Opportunities" 
+                    isExpanded={expandedSections.has('opportunities')} 
+                    onToggle={() => toggleSection('opportunities')}
+                    me={marketingMetrics.metrics.numberOfOpportunities.marketingEngaged}
+                    nme={marketingMetrics.metrics.numberOfOpportunities.nonMarketingEngaged}
+                  >
+                    <MetricRow 
+                      label="Total Opportunities" 
+                      me={marketingMetrics.metrics.numberOfOpportunities.marketingEngaged} 
+                      nme={marketingMetrics.metrics.numberOfOpportunities.nonMarketingEngaged} 
+                      isChild 
+                    />
+                    <MetricRow 
+                      label="Open" 
+                      me={marketingMetrics.metrics.open.marketingEngaged} 
+                      nme={marketingMetrics.metrics.open.nonMarketingEngaged} 
+                      isChild 
+                    />
+                    <MetricRow 
+                      label="Closed Won" 
+                      me={marketingMetrics.metrics.closedWon.marketingEngaged} 
+                      nme={marketingMetrics.metrics.closedWon.nonMarketingEngaged} 
+                      isChild 
+                    />
+                    <MetricRow 
+                      label="Closed Lost" 
+                      me={marketingMetrics.metrics.closedLost.marketingEngaged} 
+                      nme={marketingMetrics.metrics.closedLost.nonMarketingEngaged} 
+                      isChild 
+                    />
+                  </ExpandableSection>
 
-                {/* Pipeline Velocity - Expandable */}
-                <ExpandableSection 
-                  title="Average Pipeline Velocity (days)" 
-                  isExpanded={expandedSections.has('velocity')} 
-                  onToggle={() => toggleSection('velocity')}
-                >
-                  <MetricRow 
-                    label="1. Qualification" 
-                    me={marketingMetrics.metrics.pipelineVelocityQualification.marketingEngaged} 
-                    nme={marketingMetrics.metrics.pipelineVelocityQualification.nonMarketingEngaged} 
-                    isChild 
+                  {/* Win Rate - Expandable */}
+                  <ExpandableSection 
+                    title="Win Rate" 
+                    isExpanded={expandedSections.has('winrate')} 
+                    onToggle={() => toggleSection('winrate')}
+                    me={marketingMetrics.metrics.winRate.marketingEngaged}
+                    nme={marketingMetrics.metrics.winRate.nonMarketingEngaged}
+                    isPercentage
+                  >
+                    <MetricRow 
+                      label="Overall Win Rate" 
+                      me={marketingMetrics.metrics.winRate.marketingEngaged} 
+                      nme={marketingMetrics.metrics.winRate.nonMarketingEngaged} 
+                      isChild 
+                      isPercentage
+                    />
+                    
+                    {/* New Business Sub-section */}
+                    <MetricRow 
+                      label="New Business Win Rate" 
+                      me={marketingMetrics.metrics.newBusiness.marketingEngaged} 
+                      nme={marketingMetrics.metrics.newBusiness.nonMarketingEngaged} 
+                      isChild 
+                      isPercentage
+                    />
+                    <MetricRow 
+                      label="New Business: Closed Won" 
+                      me={marketingMetrics.metrics.newBusinessClosedWon.marketingEngaged} 
+                      nme={marketingMetrics.metrics.newBusinessClosedWon.nonMarketingEngaged} 
+                      isChild 
+                    />
+                    <MetricRow 
+                      label="New Business: Closed Lost" 
+                      me={marketingMetrics.metrics.newBusinessClosedLost.marketingEngaged} 
+                      nme={marketingMetrics.metrics.newBusinessClosedLost.nonMarketingEngaged} 
+                      isChild 
+                    />
+                    
+                    {/* Channel Sales Sub-section */}
+                    <MetricRow 
+                      label="Channel Sales Win Rate" 
+                      me={marketingMetrics.metrics.channelSales.marketingEngaged} 
+                      nme={marketingMetrics.metrics.channelSales.nonMarketingEngaged} 
+                      isChild 
+                      isPercentage
+                    />
+                    <MetricRow 
+                      label="Channel: Closed Won" 
+                      me={marketingMetrics.metrics.channelClosedWon.marketingEngaged} 
+                      nme={marketingMetrics.metrics.channelClosedWon.nonMarketingEngaged} 
+                      isChild 
+                    />
+                    <MetricRow 
+                      label="Channel: Closed Lost" 
+                      me={marketingMetrics.metrics.channelClosedLost.marketingEngaged} 
+                      nme={marketingMetrics.metrics.channelClosedLost.nonMarketingEngaged} 
+                      isChild 
+                    />
+                    
+                    {/* Network Sub-section */}
+                    <MetricRow 
+                      label="Network Win Rate" 
+                      me={marketingMetrics.metrics.network.marketingEngaged} 
+                      nme={marketingMetrics.metrics.network.nonMarketingEngaged} 
+                      isChild 
+                      isPercentage
+                    />
+                    <MetricRow 
+                      label="Network: Closed Won" 
+                      me={marketingMetrics.metrics.networkClosedWon.marketingEngaged} 
+                      nme={marketingMetrics.metrics.networkClosedWon.nonMarketingEngaged} 
+                      isChild 
+                    />
+                    <MetricRow 
+                      label="Network: Closed Lost" 
+                      me={marketingMetrics.metrics.networkClosedLost.marketingEngaged} 
+                      nme={marketingMetrics.metrics.networkClosedLost.nonMarketingEngaged} 
+                      isChild 
+                    />
+                  </ExpandableSection>
+
+                  {/* Pipeline Velocity - Expandable */}
+                  <ExpandableSection 
+                    title="Average Pipeline Velocity (days)" 
+                    isExpanded={expandedSections.has('velocity')} 
+                    onToggle={() => toggleSection('velocity')}
+                    me={marketingMetrics.metrics.pipelineVelocityClosedLive.marketingEngaged}
+                    nme={marketingMetrics.metrics.pipelineVelocityClosedLive.nonMarketingEngaged}
                     lowerIsBetter
-                  />
-                  <MetricRow 
-                    label="2. Commercial Discussions" 
-                    me={marketingMetrics.metrics.pipelineVelocityCommercialDiscussions.marketingEngaged} 
-                    nme={marketingMetrics.metrics.pipelineVelocityCommercialDiscussions.nonMarketingEngaged} 
-                    isChild 
-                    lowerIsBetter
-                  />
-                  <MetricRow 
-                    label="3. Onboarding Initiated" 
-                    me={marketingMetrics.metrics.pipelineVelocityOnboardingInitiated.marketingEngaged} 
-                    nme={marketingMetrics.metrics.pipelineVelocityOnboardingInitiated.nonMarketingEngaged} 
-                    isChild 
-                    lowerIsBetter
-                  />
-                  <MetricRow 
-                    label="4. Contract Signed" 
-                    me={marketingMetrics.metrics.pipelineVelocityContractSigned.marketingEngaged} 
-                    nme={marketingMetrics.metrics.pipelineVelocityContractSigned.nonMarketingEngaged} 
-                    isChild 
-                    lowerIsBetter
-                  />
-                  <MetricRow 
-                    label="Closed Live" 
-                    me={marketingMetrics.metrics.pipelineVelocityClosedLive.marketingEngaged} 
-                    nme={marketingMetrics.metrics.pipelineVelocityClosedLive.nonMarketingEngaged} 
-                    isChild 
-                    lowerIsBetter
-                  />
-                </ExpandableSection>
-              </div>
+                  >
+                    <MetricRow 
+                      label="1. Qualification" 
+                      me={marketingMetrics.metrics.pipelineVelocityQualification.marketingEngaged} 
+                      nme={marketingMetrics.metrics.pipelineVelocityQualification.nonMarketingEngaged} 
+                      isChild 
+                      lowerIsBetter
+                    />
+                    <MetricRow 
+                      label="2. Commercial Discussions" 
+                      me={marketingMetrics.metrics.pipelineVelocityCommercialDiscussions.marketingEngaged} 
+                      nme={marketingMetrics.metrics.pipelineVelocityCommercialDiscussions.nonMarketingEngaged} 
+                      isChild 
+                      lowerIsBetter
+                    />
+                    <MetricRow 
+                      label="3. Onboarding Initiated" 
+                      me={marketingMetrics.metrics.pipelineVelocityOnboardingInitiated.marketingEngaged} 
+                      nme={marketingMetrics.metrics.pipelineVelocityOnboardingInitiated.nonMarketingEngaged} 
+                      isChild 
+                      lowerIsBetter
+                    />
+                    <MetricRow 
+                      label="4. Contract Signed" 
+                      me={marketingMetrics.metrics.pipelineVelocityContractSigned.marketingEngaged} 
+                      nme={marketingMetrics.metrics.pipelineVelocityContractSigned.nonMarketingEngaged} 
+                      isChild 
+                      lowerIsBetter
+                    />
+                    <MetricRow 
+                      label="Closed Live" 
+                      me={marketingMetrics.metrics.pipelineVelocityClosedLive.marketingEngaged} 
+                      nme={marketingMetrics.metrics.pipelineVelocityClosedLive.nonMarketingEngaged} 
+                      isChild 
+                      lowerIsBetter
+                    />
+                  </ExpandableSection>
+                </tbody>
+              </table>
             </div>
           </div>
 

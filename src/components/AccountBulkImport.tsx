@@ -25,12 +25,32 @@ export default function AccountBulkImport() {
     if (simulationsArray.length === 0) {
       // Return default structure if no simulations exist
       return [
-        { id: '1', name: 'Email Opens', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
-        { id: '2', name: 'Outbound Response', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
-        { id: '3', name: 'Page Views', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
-        { id: '4', name: 'Content Downloads', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
-        { id: '5', name: 'Webinar Attendance', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
-        { id: '6', name: 'Demo Requests', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '1', name: 'Custom Redirect Click', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '2', name: 'Email Open', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '3', name: 'File Access', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '4', name: 'Landing Page Success', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '5', name: 'Page View', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '6', name: 'Site Search Query', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '7', name: 'Third Party Click', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '8', name: 'Tracker Link Click', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '9', name: 'Visitor Session', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '10', name: 'Outbound Response', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '11', name: 'Completed Meeting at Event', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '12', name: 'Networking event registration', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '13', name: 'Networking Event Attendance', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '14', name: 'Event Booth Visit', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '15', name: 'LinkedIn Engagement', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '16', name: 'LinkedIn Forms', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '17', name: 'Unsubscribe', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '18', name: 'Hard Bounced', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '19', name: 'Report', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '20', name: 'Case study', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '21', name: 'Network catalogue', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '22', name: 'Newsletter signup', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '23', name: 'Contact us form', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '24', name: 'High value page visit', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '25', name: '6Sense Temperature scores', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
+        { id: '26', name: 'LinkedIn Ad Engagement', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
       ];
     }
     // Use actions from the first simulation as template

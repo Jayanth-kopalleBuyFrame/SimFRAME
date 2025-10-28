@@ -49,8 +49,6 @@ export default function AccountBulkImport() {
         { id: '22', name: 'Newsletter signup', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
         { id: '23', name: 'Contact us form', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
         { id: '24', name: 'High value page visit', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
-        { id: '25', name: '6Sense Temperature scores', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
-        { id: '26', name: 'LinkedIn Ad Engagement', weight: 0, events: 0, currentScore: 0, proposedScore: 0, completeScore: 0 },
       ];
     }
     // Use actions from the first simulation as template

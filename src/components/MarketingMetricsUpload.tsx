@@ -124,13 +124,30 @@ export default function MarketingMetricsUpload() {
       ? (m.closedWon.nonMarketingEngaged * 125000) / m.closedWon.nonMarketingEngaged
       : 125000;
 
+    // Calculate average pipeline velocity from all children stages
+    const avgPipelineVelocityMarketing = (
+      m.pipelineVelocityQualification.marketingEngaged +
+      m.pipelineVelocityCommercialDiscussions.marketingEngaged +
+      m.pipelineVelocityOnboardingInitiated.marketingEngaged +
+      m.pipelineVelocityContractSigned.marketingEngaged +
+      m.pipelineVelocityClosedLive.marketingEngaged
+    ) / 5;
+
+    const avgPipelineVelocityNonMarketing = (
+      m.pipelineVelocityQualification.nonMarketingEngaged +
+      m.pipelineVelocityCommercialDiscussions.nonMarketingEngaged +
+      m.pipelineVelocityOnboardingInitiated.nonMarketingEngaged +
+      m.pipelineVelocityContractSigned.nonMarketingEngaged +
+      m.pipelineVelocityClosedLive.nonMarketingEngaged
+    ) / 5;
+
     const cohortData: CohortMetrics[] = [
       {
         cohort: 1, // Marketing-Engaged
         accounts: m.numberOfAccounts.marketingEngaged,
         winRate: m.winRate.marketingEngaged * 100,
         avgDealSize: avgDealSizeMarketing,
-        salesCycle: m.pipelineVelocityClosedLive.marketingEngaged,
+        salesCycle: avgPipelineVelocityMarketing,
         forecastedMarketingRevenueAttribution: m.closedWon.marketingEngaged * avgDealSizeMarketing,
         year,
       },
@@ -139,7 +156,7 @@ export default function MarketingMetricsUpload() {
         accounts: m.numberOfAccounts.nonMarketingEngaged,
         winRate: m.winRate.nonMarketingEngaged * 100,
         avgDealSize: avgDealSizeNonMarketing,
-        salesCycle: m.pipelineVelocityClosedLive.nonMarketingEngaged,
+        salesCycle: avgPipelineVelocityNonMarketing,
         forecastedMarketingRevenueAttribution: m.closedWon.nonMarketingEngaged * avgDealSizeNonMarketing,
         year,
       },
@@ -386,7 +403,7 @@ export default function MarketingMetricsUpload() {
                     isPercentage
                   >
                     <MetricRow 
-                      label="Win Rate" 
+                      label="Overall Win Rate" 
                       me={marketingMetrics.metrics.winRate.marketingEngaged} 
                       nme={marketingMetrics.metrics.winRate.nonMarketingEngaged} 
                       isChild 

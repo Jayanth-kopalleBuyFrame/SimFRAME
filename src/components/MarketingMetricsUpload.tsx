@@ -347,8 +347,8 @@ export default function MarketingMetricsUpload() {
                     title="Number of Opportunities" 
                     isExpanded={expandedSections.has('opportunities')} 
                     onToggle={() => toggleSection('opportunities')}
-                    me={marketingMetrics.metrics.numberOfOpportunities.marketingEngaged}
-                    nme={marketingMetrics.metrics.numberOfOpportunities.nonMarketingEngaged}
+                    // me={marketingMetrics.metrics.numberOfOpportunities.marketingEngaged}
+                    // nme={marketingMetrics.metrics.numberOfOpportunities.nonMarketingEngaged}
                   >
                     <MetricRow 
                       label="Total Opportunities" 
@@ -381,12 +381,12 @@ export default function MarketingMetricsUpload() {
                     title="Win Rate" 
                     isExpanded={expandedSections.has('winrate')} 
                     onToggle={() => toggleSection('winrate')}
-                    me={marketingMetrics.metrics.winRate.marketingEngaged}
-                    nme={marketingMetrics.metrics.winRate.nonMarketingEngaged}
+                    // me={marketingMetrics.metrics.winRate.marketingEngaged}
+                    // nme={marketingMetrics.metrics.winRate.nonMarketingEngaged}
                     isPercentage
                   >
                     <MetricRow 
-                      label="Overall Win Rate" 
+                      label="Win Rate" 
                       me={marketingMetrics.metrics.winRate.marketingEngaged} 
                       nme={marketingMetrics.metrics.winRate.nonMarketingEngaged} 
                       isChild 
@@ -462,8 +462,8 @@ export default function MarketingMetricsUpload() {
                     title="Average Pipeline Velocity (days)" 
                     isExpanded={expandedSections.has('velocity')} 
                     onToggle={() => toggleSection('velocity')}
-                    me={marketingMetrics.metrics.pipelineVelocityClosedLive.marketingEngaged}
-                    nme={marketingMetrics.metrics.pipelineVelocityClosedLive.nonMarketingEngaged}
+                    // me={marketingMetrics.metrics.pipelineVelocityClosedLive.marketingEngaged}
+                    // nme={marketingMetrics.metrics.pipelineVelocityClosedLive.nonMarketingEngaged}
                     lowerIsBetter
                   >
                     <MetricRow 
